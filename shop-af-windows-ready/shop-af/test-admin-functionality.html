@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Functionality Test - Shop AF</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .debug-log {
+            background-color: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .step {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin: 10px 0;
+        }
+        .warning {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin: 10px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            padding: 15px;
+            border-left: 4px solid #28a745;
+            margin: 10px 0;
+        }
+        .error {
+            background-color: #f8d7da;
+            padding: 15px;
+            border-left: 4px solid #dc3545;
+            margin: 10px 0;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .log-entry {
+            margin: 2px 0;
+        }
+        .log-success { color: #00ff00; }
+        .log-error { color: #ff4444; }
+        .log-warning { color: #ffaa00; }
+        .log-info { color: #00aaff; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 Admin Grant Pro Functionality Test</h1>
+        <p>Use this guide to debug the admin grant pro issue in your deployed Shop AF application</p>
+    </div>
+
+    <div class="warning">
+        <h3>⚠️ Before You Start</h3>
+        <p><strong>This is a testing guide, not a functional test.</strong> You need to perform these steps in your actual deployed Shop AF application.</p>
+        <p><strong>Prerequisites:</strong></p>
+        <ul>
+            <li>Shop AF application deployed with the latest build</li>
+            <li>Admin user account with is_admin = true in database</li>
+            <li>At least one user with plan_type = 'free' to test on</li>
+            <li>Browser developer tools open (F12)</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Step-by-Step Testing Process</h2>
+        
+        <div class="step">
+            <h3>Step 1: Verify Admin Access</h3>
+            <p><strong>Action:</strong> Login as admin and navigate to /admin</p>
+            <p><strong>Expected Console Logs:</strong></p>
+            <div class="debug-log">🔍 AdminPage loadData - Profile: {user_id: "...", username: "...", is_admin: true, ...}
+🔍 AdminPage loadData - Is Admin: true
+🔍 AdminPage loadData - User: admin@example.com
+✅ User is admin, loading admin data...</div>
+            <p><strong>If you see "Is Admin: false":</strong> Update database with <code>UPDATE profiles SET is_admin = true WHERE user_id = 'your-user-id'</code></p>
+        </div>
+
+        <div class="step">
+            <h3>Step 2: Test Button Click</h3>
+            <p><strong>Action:</strong> Find a user with "Free" plan and click "Grant Pro" button</p>
+            <p><strong>Expected Console Log:</strong></p>
+            <div class="debug-log">🖱️ Grant Pro button clicked for user: [user_id] [username]</div>
+            <p><strong>If this log doesn't appear:</strong> Button click handler isn't working - try refreshing page</p>
+        </div>
+
+        <div class="step">
+            <h3>Step 3: Verify Function Call</h3>
+            <p><strong>Expected Console Log:</strong></p>
+            <div class="debug-log">🚀 grantProAccess function called with userId: [user_id]</div>
+            <p><strong>If this log doesn't appear:</strong> JavaScript error preventing function execution</p>
+        </div>
+
+        <div class="step">
+            <h3>Step 4: Confirm Dialog</h3>
+            <p><strong>Action:</strong> Click "OK" in the confirmation dialog</p>
+            <p><strong>Expected Console Log:</strong></p>
+            <div class="debug-log">✅ User confirmed, proceeding with Pro access grant</div>
+            <p><strong>If you see cancellation log:</strong> You clicked "Cancel" - try again and click "OK"</p>
+        </div>
+
+        <div class="step">
+            <h3>Step 5: Database Operation</h3>
+            <p><strong>Expected Console Logs:</strong></p>
+            <div class="debug-log">📝 Starting Pro access grant for user: [user_id]
+🔍 Current user (admin): [admin_email] [admin_id]
+🔍 Current profile (admin): [admin_username] true
+👤 Target user found: {user_id: "...", plan_type: "free", ...}
+📊 Current plan: free Status: free
+🔄 Updating user plan to Pro...
+✅ Pro access granted successfully!
+📊 Updated user data: {user_id: "...", plan_type: "pro", subscription_status: "active", ...}
+📊 New plan: pro New status: active
+🔄 Reloading users list...
+✅ Users list reloaded</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🚨 Common Error Scenarios</h2>
+
+        <div class="error">
+            <h3>Error 1: Permission Denied</h3>
+            <div class="debug-log">❌ Supabase update error: {message: "permission denied", code: "42501"}</div>
+            <p><strong>Fix:</strong> Check RLS policies in Supabase. Admin users need UPDATE permission on profiles table.</p>
+        </div>
+
+        <div class="error">
+            <h3>Error 2: User Not Found</h3>
+            <div class="debug-log">❌ Error fetching target user: {message: "No rows found"}</div>
+            <p><strong>Fix:</strong> The target user doesn't exist or user_id is incorrect.</p>
+        </div>
+
+        <div class="error">
+            <h3>Error 3: No Data Returned</h3>
+            <div class="debug-log">❌ No data returned from update operation</div>
+            <p><strong>Fix:</strong> Update succeeded but no data returned. Check if .select() is working properly.</p>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🛠️ Quick Fixes</h2>
+
+        <div class="success">
+            <h3>Fix 1: Grant Admin Privileges</h3>
+            <p>Run this SQL in Supabase SQL Editor:</p>
+            <div class="debug-log">UPDATE profiles 
+SET is_admin = true 
+WHERE user_id = 'your-admin-user-id';</div>
+        </div>
+
+        <div class="success">
+            <h3>Fix 2: Check RLS Policy</h3>
+            <p>Ensure admins can update profiles:</p>
+            <div class="debug-log">CREATE POLICY "Admins can update all profiles" ON profiles
+FOR UPDATE USING (
+  auth.uid() IN (
+    SELECT user_id FROM profiles WHERE is_admin = true
+  )
+);</div>
+        </div>
+
+        <div class="success">
+            <h3>Fix 3: Manual Pro Grant (Temporary)</h3>
+            <p>If admin function doesn't work, manually grant pro:</p>
+            <div class="debug-log">UPDATE profiles 
+SET plan_type = 'pro', 
+    subscription_status = 'active',
+    updated_at = NOW()
+WHERE user_id = 'target-user-id';</div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Success Verification</h2>
+        <p>After successful pro granting, verify:</p>
+        <ul>
+            <li>✅ User's plan shows as "Pro" in admin dashboard</li>
+            <li>✅ User can access pro features</li>
+            <li>✅ Database shows plan_type = 'pro' and subscription_status = 'active'</li>
+            <li>✅ No error messages in console</li>
+        </ul>
+    </div>
+
+    <div class="warning">
+        <h3>📞 Need More Help?</h3>
+        <p>If you're still having issues:</p>
+        <ol>
+            <li>Copy the complete console log output</li>
+            <li>Note which step failed</li>
+            <li>Check ADMIN_DEBUG_GUIDE.md for detailed troubleshooting</li>
+            <li>Verify your Supabase RLS policies</li>
+            <li>Test with a different admin user</li>
+        </ol>
+    </div>
+
+    <script>
+        // Helper function to format console output for copying
+        function copyConsoleOutput() {
+            const logs = document.querySelectorAll('.debug-log');
+            let output = 'Expected Console Output:\n\n';
+            logs.forEach((log, index) => {
+                output += `Step ${index + 1}:\n${log.textContent}\n\n`;
+            });
+            
+            navigator.clipboard.writeText(output).then(() => {
+                alert('Console output examples copied to clipboard!');
+            });
+        }
+        
+        // Add copy button
+        const copyButton = document.createElement('button');
+        copyButton.textContent = 'Copy Expected Console Output';
+        copyButton.onclick = copyConsoleOutput;
+        document.querySelector('.header').appendChild(copyButton);
+    </script>
+</body>
+</html>

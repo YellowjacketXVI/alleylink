@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlleyLink Routing Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3B82F6;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 5px;
+            transition: background-color 0.2s;
+        }
+        .test-link:hover {
+            background-color: #2563EB;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background-color: #D1FAE5; color: #065F46; }
+        .error { background-color: #FEE2E2; color: #991B1B; }
+        .info { background-color: #DBEAFE; color: #1E40AF; }
+    </style>
+</head>
+<body>
+    <h1>🔗 AlleyLink Routing Test</h1>
+    
+    <div class="test-container">
+        <h2>📋 Test Instructions</h2>
+        <div class="info status">
+            <strong>Purpose:</strong> Test if custom profile URLs work when accessed directly from external sources.
+        </div>
+        
+        <h3>🧪 Test Cases</h3>
+        <p>Click these links to test direct navigation to profile pages:</p>
+        
+        <div>
+            <a href="/u/testuser123" class="test-link" target="_blank">
+                Test User Profile
+            </a>
+            <a href="/u/ashleyrico333825" class="test-link" target="_blank">
+                Ashley's Profile
+            </a>
+            <a href="/u/nonexistent" class="test-link" target="_blank">
+                Non-existent Profile (should show 404 page)
+            </a>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>✅ Expected Results</h2>
+        
+        <div class="success status">
+            <strong>✅ Success:</strong> Profile pages load correctly with user data
+        </div>
+        
+        <div class="success status">
+            <strong>✅ Success:</strong> Non-existent profiles show friendly 404 page
+        </div>
+        
+        <div class="error status">
+            <strong>❌ Failure:</strong> Server 404 error (white page with "Not Found")
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>🔧 Troubleshooting</h2>
+        
+        <h3>If you see server 404 errors:</h3>
+        <ul>
+            <li>Check if <code>_redirects</code> file is deployed</li>
+            <li>Verify hosting platform supports client-side routing</li>
+            <li>Clear browser cache and try again</li>
+            <li>Check deployment logs for errors</li>
+        </ul>
+        
+        <h3>Hosting Platform Specific:</h3>
+        <ul>
+            <li><strong>Netlify:</strong> Uses <code>_redirects</code> file</li>
+            <li><strong>Vercel:</strong> Uses <code>vercel.json</code> file</li>
+            <li><strong>Apache:</strong> Uses <code>.htaccess</code> file</li>
+            <li><strong>Nginx:</strong> Requires server config update</li>
+        </ul>
+    </div>
+
+    <div class="test-container">
+        <h2>📊 Test Results</h2>
+        <div id="results">
+            <p>Click the test links above and record your results here:</p>
+            <ul>
+                <li>Test User Profile: <span id="test1">Not tested</span></li>
+                <li>Ashley's Profile: <span id="test2">Not tested</span></li>
+                <li>Non-existent Profile: <span id="test3">Not tested</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Simple test result tracking
+        console.log('🔗 AlleyLink Routing Test Page Loaded');
+        console.log('📋 Test the profile links above to verify routing works');
+        
+        // Log current URL for debugging
+        console.log('Current URL:', window.location.href);
+        console.log('Current Path:', window.location.pathname);
+    </script>
+</body>
+</html>
