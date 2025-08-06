@@ -25,3 +25,4 @@
          console.log('Auth error (non-critical):', error)
        }
      }
+})
