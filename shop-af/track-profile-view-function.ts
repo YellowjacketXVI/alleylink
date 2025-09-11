@@ -1,3 +1,5 @@
+// Copy this code into Supabase Dashboard → Edge Functions → track-profile-view
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -27,6 +29,14 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    const { profileUserId } = await req.json()
+    if (!profileUserId) {
+      return new Response(JSON.stringify({ error: 'Missing profileUserId' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
     // Optional auth (viewer may be anonymous)
     let viewerUserId: string | null = null
     const authHeader = req.headers.get('authorization')
@@ -36,25 +46,17 @@ serve(async (req) => {
       viewerUserId = user?.id ?? null
     }
 
-    const { productId } = await req.json()
-    if (!productId) {
-      return new Response(JSON.stringify({ error: 'Missing productId' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      })
-    }
-
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || null
     const userAgent = req.headers.get('user-agent') || null
     const referrer = req.headers.get('referer') || null
 
     const { error } = await supabaseClient
-      .from('click_analytics')
+      .from('profile_view_analytics')
       .insert([
         {
-          product_id: productId,
-          user_id: viewerUserId,
-          clicked_at: new Date().toISOString(),
+          profile_user_id: profileUserId,
+          viewer_user_id: viewerUserId,
+          viewed_at: new Date().toISOString(),
           ip_address: ip,
           user_agent: userAgent,
           referrer: referrer,
@@ -73,7 +75,7 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })
   } catch (err) {
-    console.error('track-click error:', err)
+    console.error('track-profile-view error:', err)
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

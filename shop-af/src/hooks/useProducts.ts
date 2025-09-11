@@ -14,29 +14,29 @@ export function useProducts(userId?: string) {
 
     // Prevent duplicate fetches for the same user
     if (targetUserId && targetUserId !== lastFetchedUserIdRef.current) {
-      console.log('useProducts: Fetching products for userId:', targetUserId)
+      // Fetch products for the target user
       lastFetchedUserIdRef.current = targetUserId
       fetchProducts(targetUserId)
     } else if (!targetUserId) {
-      console.log('useProducts: No userId provided, setting empty products')
+      // No userId provided, reset products
       setLoading(false)
       setProducts([])
       lastFetchedUserIdRef.current = null
     } else {
-      console.log('useProducts: Skipping fetch, already loaded for userId:', targetUserId)
+      // Skip duplicate fetch for same userId
     }
   }, [userId, user?.id])
 
   const fetchProducts = async (targetUserId?: string) => {
     const actualUserId = targetUserId || userId || user?.id
     if (!actualUserId) {
-      console.log('fetchProducts: No userId available')
+      // No userId available
       setLoading(false)
       return
     }
 
     try {
-      console.log('fetchProducts: Loading products for userId:', actualUserId)
+      // Begin loading products
       setLoading(true)
       setError(null)
 
@@ -47,7 +47,7 @@ export function useProducts(userId?: string) {
         .eq('is_active', true)
         .order('created_at', { ascending: false })
 
-      console.log('fetchProducts result:', { data, error })
+      // Fetch result handled below
 
       if (error) {
         console.error('Products fetch error:', error)
@@ -55,9 +55,9 @@ export function useProducts(userId?: string) {
       }
 
       setProducts(data || [])
-      console.log('Products loaded successfully:', data?.length || 0, 'products')
+      // Products loaded
     } catch (err: any) {
-      console.error('fetchProducts error:', err)
+      // Capture fetch error
       setError(err.message)
     } finally {
       setLoading(false)
@@ -154,7 +154,7 @@ export function useProducts(userId?: string) {
   }
 
   const trackClick = async (productId: number, affiliateUrl: string) => {
-    console.log('trackClick called with:', { productId, affiliateUrl })
+    // Track product click
 
     // Always open the affiliate link immediately
     window.open(affiliateUrl, '_blank', 'noopener,noreferrer')
@@ -166,12 +166,12 @@ export function useProducts(userId?: string) {
       })
 
       if (error) {
-        console.log('Track-click function error (non-critical):', error)
+        // Non-critical error while tracking click
       } else {
-        console.log('Click tracked successfully:', data)
+        // Click tracked successfully
       }
     } catch (err) {
-      console.log('Track-click function failed (non-critical):', err)
+      // Non-critical failure while tracking click
       // This is non-critical since we already opened the link
     }
   }

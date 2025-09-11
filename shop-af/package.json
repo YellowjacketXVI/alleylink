@@ -8,8 +8,11 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "install-and-dev": "npm install && npm run dev",
-    "install-and-build": "npm install && npm run build"
+    "test": "vitest run",
+    "install-and-dev": "pnpm install && pnpm run dev",
+    "install-and-build": "pnpm install && pnpm run build",
+    "clean": "rm -rf node_modules && rm -rf dist",
+    "fresh-install": "pnpm run clean && pnpm install"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -79,6 +82,7 @@
     "tailwindcss": "v3.4.16",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.15.0",
-    "vite": "^6.0.1"
+    "vite": "^6.0.1",
+    "vitest": "^2.1.4"
   }
 }
