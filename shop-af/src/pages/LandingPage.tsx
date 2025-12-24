@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, ShoppingBag, Users, TrendingUp, Star, Check, Zap } from 'lucide-react'
+import { ArrowRight, ShoppingBag, Users, TrendingUp, Star, Check, Zap, Link as LinkIcon, Plus, Share2 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import { useAuth } from '../context/AuthContext'
 import { useSubscription } from '../hooks/useSubscription'
@@ -36,72 +36,133 @@ export default function LandingPage() {
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
+            <div className="inline-block bg-white/10 backdrop-blur-sm rounded-full px-6 py-2 mb-8">
+              <span className="text-white font-medium">✨ Affiliate Marketing Made Simple</span>
+            </div>
+
             <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
-              Your
+              Get Your Link.
+              <br />
               <span className="bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                {' '}Affiliate{' '}
+                Add Products.
               </span>
-              Empire
-              <br />Starts Here
+              <br />
+              Start Earning.
             </h1>
 
-            <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Create stunning personalized storefronts, share your favorite products,
-              and earn commissions with AlleyLink - the ultimate affiliate marketing platform.
+            <p className="text-xl md:text-2xl text-blue-100 mb-12 max-w-3xl mx-auto leading-relaxed">
+              Create your personalized storefront in minutes. No coding, no complexity - 
+              just a simple way to share products and earn affiliate commissions.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
               <Link
                 to={user ? "/dashboard" : "/signup"}
                 className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-gray-100 transition-all transform hover:scale-105 shadow-xl flex items-center space-x-2"
               >
-                <span>{user ? "Go to Dashboard" : "Start Building Free"}</span>
+                <span>{user ? "Go to Dashboard" : "Get Your Free Link"}</span>
                 <ArrowRight className="w-5 h-5" />
               </Link>
 
-              <Link
-                to="/pricing"
-                className="border-2 border-white text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white hover:text-blue-600 transition-all transform hover:scale-105"
-              >
-                View Pricing
-              </Link>
+              <div className="text-blue-100 text-sm">
+                Free forever • No credit card required
+              </div>
             </div>
 
             {/* Social Proof */}
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-8 text-blue-100">
               <div className="flex items-center space-x-2">
                 <Users className="w-5 h-5" />
-                <span>10,000+ creators</span>
+                <span>1,000+ creators earning</span>
               </div>
               <div className="flex items-center space-x-2">
                 <TrendingUp className="w-5 h-5" />
-                <span>$2M+ in commissions</span>
+                <span>Growing fast</span>
               </div>
               <div className="flex items-center space-x-1">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                 ))}
-                <span className="ml-1">4.9/5 rating</span>
+                <span className="ml-1">Loved by users</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Features Section */}
+      {/* How It Works Section */}
       <div className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              How It Works
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Start earning in 3 simple steps. No technical skills required.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20">
+            {/* Step 1 */}
+            <div className="text-center group">
+              <div className="relative mb-8">
+                <div className="w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <LinkIcon className="w-10 h-10 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  1
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Get Your Link</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Sign up for free and get your personalized AlleyLink URL instantly. 
+                No setup fees, no waiting.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="text-center group">
+              <div className="relative mb-8">
+                <div className="w-20 h-20 bg-gradient-to-r from-green-600 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <Plus className="w-10 h-10 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  2
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Add Products</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Upload product images, add descriptions, and paste your affiliate links. 
+                Our simple interface makes it effortless.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="text-center group">
+              <div className="relative mb-8">
+                <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                  <Share2 className="w-10 h-10 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  3
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Share & Earn</h3>
+              <p className="text-gray-600 leading-relaxed">
+                Share your beautiful storefront on social media, with friends, or anywhere online. 
+                Start earning commissions immediately.
+              </p>
+            </div>
+          </div>
+
+          {/* Features Grid */}
+          <div className="text-center mb-16">
+            <h3 className="text-3xl font-bold text-gray-900 mb-6">
               Everything You Need to
               <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 {' '}Succeed
               </span>
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Powerful tools designed for affiliate marketers who want to build
-              professional, converting storefronts.
-            </p>
+            </h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -111,11 +172,11 @@ export default function LandingPage() {
                 <ShoppingBag className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">
-                Personal Storefronts
+                Beautiful Storefronts
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Create beautiful, customizable profile pages that showcase your
-                favorite products with your unique affiliate links.
+                Create stunning, mobile-optimized profile pages with custom fonts, colors, 
+                and backgrounds that reflect your brand.
               </p>
             </div>
 
@@ -125,11 +186,11 @@ export default function LandingPage() {
                 <Zap className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">
-                Easy Product Management
+                Drag & Drop Simple
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Add products with drag-and-drop image uploads, organize with
-                custom categories, and manage everything from one dashboard.
+                Add products in seconds with our intuitive interface. Upload images, 
+                organize with categories, and manage everything effortlessly.
               </p>
             </div>
 
@@ -139,11 +200,11 @@ export default function LandingPage() {
                 <TrendingUp className="w-6 h-6 text-white" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-4">
-                Analytics & Tracking
+                Track Your Success
               </h3>
               <p className="text-gray-600 leading-relaxed">
-                Track clicks, monitor performance, and optimize your strategy
-                with detailed analytics and insights.
+                Monitor clicks, track performance, and see which products are earning you 
+                the most with detailed analytics.
               </p>
             </div>
           </div>

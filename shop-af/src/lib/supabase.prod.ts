@@ -24,7 +24,7 @@ export interface Profile {
   display_name_color?: string
   display_name_font?: 'merriweather' | 'poppins' | 'orbitron' | 'montserrat' | 'inter' | 'papyrus' | 'sansserif'
   subscription_status: 'free' | 'active' | 'inactive'
-  plan_type: 'free' | 'pro' | 'unlimited'
+  plan_type: 'free' | 'basic' | 'pro' | 'unlimited'
   stripe_customer_id?: string
   stripe_subscription_id?: string
   product_count: number
@@ -104,12 +104,14 @@ export interface ProfileViewAnalytics {
 
 // Plan limits
 export const PLAN_LIMITS = {
-  free: { products: 3, analytics: false },
+  free: { products: 9, analytics: false },
+  basic: { products: 100, analytics: false },
   pro: { products: Infinity, analytics: true },
   unlimited: { products: Infinity, analytics: true }
 } as const
 
 // Stripe price IDs with fallback
 export const STRIPE_PRICES = {
+  basic_monthly: import.meta.env.VITE_STRIPE_PRICE_BASIC_MONTHLY || 'price_1SB68VDGBbR8XeGs5EqAmqyu',
   pro_monthly: import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY || 'price_1Rrki6DGBbR8XeGsrr4iz7TY'
 } as const

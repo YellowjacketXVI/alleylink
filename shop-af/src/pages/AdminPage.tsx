@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase, WhitelistEntry, Profile } from '../lib/supabase'
 import Navbar from '../components/Navbar'
 import {
   Users,
   UserPlus,
-  UserMinus,
   Mail,
-  Calendar,
   Shield,
   Search,
   Plus,
@@ -32,17 +30,10 @@ export default function AdminPage() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
-    console.log('🔍 AdminPage loadData - Profile:', profile)
-    console.log('🔍 AdminPage loadData - Is Admin:', profile?.is_admin)
-    console.log('🔍 AdminPage loadData - User:', user?.email)
-
     setLoading(true)
     try {
       if (profile?.is_admin) {
-        console.log('✅ User is admin, loading admin data...')
         await Promise.all([loadUsers(), loadWhitelist()])
-      } else {
-        console.log('❌ User is not admin, skipping admin data load')
       }
     } finally {
       setLoading(false)
@@ -137,21 +128,11 @@ export default function AdminPage() {
   }
 
   const grantProAccess = async (userId: string) => {
-    console.log('🚀 grantProAccess function called with userId:', userId)
-
     if (!confirm('Are you sure you want to grant Pro access to this user?')) {
-      console.log('❌ User cancelled the confirmation dialog')
       return
     }
 
-    console.log('✅ User confirmed, proceeding with Pro access grant')
-
     try {
-      console.log('📝 Starting Pro access grant for user:', userId)
-      console.log('🔍 Current user (admin):', user?.email, user?.id)
-      console.log('🔍 Current profile (admin):', profile?.username, profile?.is_admin)
-
-      // First, let's check if the user exists
       const { data: targetUser, error: fetchError } = await supabase
         .from('profiles')
         .select('*')
@@ -159,15 +140,9 @@ export default function AdminPage() {
         .single()
 
       if (fetchError) {
-        console.error('❌ Error fetching target user:', fetchError)
         throw new Error(`Failed to find user: ${fetchError.message}`)
       }
 
-      console.log('👤 Target user found:', targetUser)
-      console.log('📊 Current plan:', targetUser.plan_type, 'Status:', targetUser.subscription_status)
-
-      // Perform the update
-      console.log('🔄 Updating user plan to Pro...')
       const { data, error } = await supabase
         .from('profiles')
         .update({
@@ -179,44 +154,20 @@ export default function AdminPage() {
         .select()
 
       if (error) {
-        console.error('❌ Supabase update error:', error)
-        console.error('❌ Error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        })
+        console.error('Error granting Pro access:', error)
         throw error
       }
 
       if (!data || data.length === 0) {
-        console.error('❌ No data returned from update operation')
         throw new Error('Update operation returned no data. User may not exist or you may not have permission.')
       }
 
-      console.log('✅ Pro access granted successfully!')
-      console.log('📊 Updated user data:', data[0])
-      console.log('📊 New plan:', data[0].plan_type, 'New status:', data[0].subscription_status)
-
       alert(`✅ Pro access granted successfully to ${targetUser.display_name || targetUser.username}!`)
-
-      console.log('🔄 Reloading users list...')
       await loadUsers()
-      console.log('✅ Users list reloaded')
 
     } catch (err: any) {
-      console.error('❌ Error granting Pro access:', err)
-      console.error('❌ Error stack:', err.stack)
-
-      let errorMessage = 'Unknown error occurred'
-
-      if (err.message) {
-        errorMessage = err.message
-      } else if (typeof err === 'string') {
-        errorMessage = err
-      }
-
-      console.error('❌ Final error message:', errorMessage)
+      console.error('Error granting Pro access:', err)
+      const errorMessage = err.message || 'Unknown error occurred'
       alert(`❌ Failed to grant Pro access: ${errorMessage}`)
     }
   }
@@ -373,10 +324,7 @@ export default function AdminPage() {
                               </button>
                               {user.plan_type === 'free' && (
                                 <button
-                                  onClick={() => {
-                                    console.log('🖱️ Grant Pro button clicked for user:', user.user_id, user.username)
-                                    grantProAccess(user.user_id)
-                                  }}
+                                  onClick={() => grantProAccess(user.user_id)}
                                   className="inline-flex items-center px-2 py-1 rounded text-xs bg-green-100 text-green-700 hover:bg-green-200"
                                 >
                                   <Crown className="w-3 h-3 mr-1" />

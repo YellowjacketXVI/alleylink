@@ -1,15 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { STRIPE_CONFIG } from '../lib/stripe'
+
+type PlanType = 'basic' | 'pro'
+
+const VALID_PLAN_TYPES: PlanType[] = ['basic', 'pro']
+
+const isValidPlanType = (planType: string): planType is PlanType => {
+  return VALID_PLAN_TYPES.includes(planType as PlanType)
+}
 
 export function useSubscription() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { user, profile, refreshProfile } = useAuth()
 
-  const createSubscription = async (planType: 'pro' = 'pro'): Promise<string | null> => {
+  // Cleanup function to reset states on unmount
+  useEffect(() => {
+    return () => {
+      setLoading(false)
+      setError(null)
+    }
+  }, [])
+
+  const createSubscription = async (planType: PlanType = 'pro'): Promise<string | null> => {
     if (!user) {
-      setError('Please sign in to subscribe')
+      const errorMsg = 'Authentication required: Please sign in to subscribe'
+      setError(errorMsg)
+      return null
+    }
+
+    if (!isValidPlanType(planType)) {
+      const errorMsg = `Invalid plan type: ${planType}. Must be one of: ${VALID_PLAN_TYPES.join(', ')}`
+      setError(errorMsg)
       return null
     }
 
@@ -17,35 +41,56 @@ export function useSubscription() {
     setError(null)
 
     try {
+      // Development-only logging
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Invoking create-subscription with planType:', planType)
+        console.log('Expected Basic price ID:', STRIPE_CONFIG.prices.basic.monthly)
+        console.log('Expected Pro price ID:', STRIPE_CONFIG.prices.pro.monthly)
+      }
+
       const { data, error } = await supabase.functions.invoke('create-subscription', {
         body: { planType }
       })
 
-      if (error) throw error
+      if (process.env.NODE_ENV === 'development') {
+        console.log('create-subscription response:', { data, error })
+      }
+
+      if (error) {
+        throw new Error(`Subscription creation failed: ${error.message || 'Unknown error'}`)
+      }
 
       if (data.data.whitelisted) {
         // User is whitelisted, refresh profile to show new status
-        await refreshProfile()
-        return null // No checkout needed
+        try {
+          await refreshProfile()
+          return null // No checkout needed
+        } catch (refreshError: any) {
+          // Even if profile refresh fails, the subscription was created successfully
+          console.warn('Profile refresh failed after whitelisting:', refreshError)
+          return null
+        }
       }
 
       if (data.data.checkoutUrl) {
         return data.data.checkoutUrl
       }
 
-      throw new Error('No checkout URL received')
+      throw new Error('Subscription service error: No checkout URL received from payment provider')
     } catch (err: any) {
-      setError(err.message || 'Failed to create subscription')
+      const errorMsg = err.message || 'Failed to create subscription due to an unexpected error'
+      setError(errorMsg)
       return null
     } finally {
       setLoading(false)
     }
   }
 
-  const openCustomerPortal = async (): Promise<void> => {
+  const openCustomerPortal = useCallback(async (onNavigate?: (url: string) => void): Promise<boolean> => {
     if (!user) {
-      setError('Please sign in to manage subscription')
-      return
+      const errorMsg = 'Authentication required: Please sign in to manage your subscription'
+      setError(errorMsg)
+      return false
     }
 
     setLoading(true)
@@ -54,27 +99,36 @@ export function useSubscription() {
     try {
       const { data, error } = await supabase.functions.invoke('customer-portal')
 
-      if (error) throw error
+      if (error) {
+        throw new Error(`Portal access failed: ${error.message || 'Unknown error'}`)
+      }
 
       if (data.data.portalUrl) {
-        window.location.href = data.data.portalUrl
+        if (onNavigate) {
+          onNavigate(data.data.portalUrl)
+        } else {
+          window.location.href = data.data.portalUrl
+        }
+        return true
       } else {
-        throw new Error('No portal URL received')
+        throw new Error('Portal service error: No portal URL received from payment provider')
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to open customer portal')
+      const errorMsg = err.message || 'Failed to open customer portal due to an unexpected error'
+      setError(errorMsg)
+      return false
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
 
-  const cancelSubscription = async (): Promise<boolean> => {
+  const cancelSubscription = async (onNavigate?: (url: string) => void): Promise<boolean> => {
     // Redirect to customer portal for subscription management
-    await openCustomerPortal()
-    return true
+    return await openCustomerPortal(onNavigate)
   }
 
   const isSubscribed = profile?.subscription_status === 'active'
+  const isBasic = profile?.plan_type === 'basic'
   const isPro = profile?.plan_type === 'pro' || profile?.plan_type === 'unlimited'
   const isUnlimited = profile?.plan_type === 'unlimited'
 
@@ -83,6 +137,7 @@ export function useSubscription() {
     cancelSubscription,
     openCustomerPortal,
     isSubscribed,
+    isBasic,
     isPro,
     isUnlimited,
     loading,

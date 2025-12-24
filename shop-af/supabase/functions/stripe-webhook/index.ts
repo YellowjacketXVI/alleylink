@@ -80,8 +80,25 @@ serve(async (req) => {
   }
 })
 
+// Helper function to determine plan type from price ID
+function getPlanTypeFromPriceId(priceId: string): string {
+  const basicPriceId = Deno.env.get('STRIPE_PRICE_BASIC_MONTHLY')
+  const proPriceId = Deno.env.get('STRIPE_PRICE_PRO_MONTHLY')
+
+  if (priceId === basicPriceId) {
+    return 'basic'
+  } else if (priceId === proPriceId) {
+    return 'pro'
+  }
+
+  // Default to pro for unknown price IDs (backward compatibility)
+  return 'pro'
+}
+
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.user_id
+  const planType = session.metadata?.plan_type || 'pro'
+
   if (!userId) {
     console.error('No user_id in session metadata')
     return
@@ -92,7 +109,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     .from('profiles')
     .update({
       subscription_status: 'active',
-      plan_type: 'pro',
+      plan_type: planType,
       stripe_subscription_id: session.subscription as string,
       updated_at: new Date().toISOString()
     })
@@ -101,7 +118,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (error) {
     console.error('Error updating profile after checkout:', error)
   } else {
-    console.log(`Profile updated for user ${userId}`)
+    console.log(`Profile updated for user ${userId} with plan ${planType}`)
   }
 }
 
@@ -112,11 +129,15 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     return
   }
 
+  // Determine plan type from price ID
+  const priceId = subscription.items.data[0]?.price?.id
+  const planType = priceId ? getPlanTypeFromPriceId(priceId) : 'pro'
+
   const { error } = await supabaseClient
     .from('profiles')
     .update({
       subscription_status: 'active',
-      plan_type: 'pro',
+      plan_type: planType,
       stripe_subscription_id: subscription.id,
       updated_at: new Date().toISOString()
     })
@@ -124,6 +145,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 
   if (error) {
     console.error('Error updating profile after subscription created:', error)
+  } else {
+    console.log(`Subscription created for user ${userId} with plan ${planType}`)
   }
 }
 
@@ -139,17 +162,26 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     status = 'active'
   }
 
+  // Determine plan type from price ID if active, otherwise set to free
+  let planType = 'free'
+  if (status === 'active') {
+    const priceId = subscription.items.data[0]?.price?.id
+    planType = priceId ? getPlanTypeFromPriceId(priceId) : 'pro'
+  }
+
   const { error } = await supabaseClient
     .from('profiles')
     .update({
       subscription_status: status,
-      plan_type: status === 'active' ? 'pro' : 'free',
+      plan_type: planType,
       updated_at: new Date().toISOString()
     })
     .eq('user_id', userId)
 
   if (error) {
     console.error('Error updating profile after subscription updated:', error)
+  } else {
+    console.log(`Subscription updated for user ${userId}: status=${status}, plan=${planType}`)
   }
 }
 

@@ -67,6 +67,15 @@ serve(async (req) => {
       // Don't fail the request if analytics insertion fails
     }
 
+    // Increment click count on the product
+    const { error: updateError } = await supabaseClient
+      .rpc('increment_click_count', { product_id: productId })
+
+    if (updateError) {
+      console.error('Error updating product click count:', updateError)
+      // Don't fail the request if click count update fails
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 

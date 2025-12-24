@@ -49,7 +49,7 @@ export default function ProductGrid({
         </h3>
         <p className="text-gray-600">
           {editable
-            ? 'Start building your affiliate empire by adding your first product.'
+            ? 'Ready to start earning? Add your first product in just a few clicks.'
             : 'This user hasn\'t added any products yet.'}
         </p>
       </div>

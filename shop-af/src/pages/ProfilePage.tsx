@@ -5,22 +5,145 @@ import { useProducts } from '../hooks/useProducts'
 import { ExternalLink, ArrowLeft, User, MapPin, Calendar, Tag, ChevronDown, Filter, Star } from 'lucide-react'
 import Navbar from '../components/Navbar'
 
-// Helper function to get display name style
+// Helper function to get display name style - supports all fonts dynamically
 const getDisplayNameStyle = (profile: Profile) => {
-  const fontOptions = [
-    { id: 'merriweather', family: 'Merriweather, serif' },
-    { id: 'poppins', family: 'Poppins, sans-serif' },
-    { id: 'orbitron', family: 'Orbitron, sans-serif' },
-    { id: 'montserrat', family: 'Montserrat, sans-serif' },
-    { id: 'inter', family: 'Inter, sans-serif' },
-    { id: 'papyrus', family: 'Papyrus, fantasy' },
-    { id: 'sansserif', family: 'sans-serif' }
-  ]
+  // Comprehensive font mapping that supports all possible fonts
+  const fontMap: Record<string, string> = {
+    // Modern Sans-Serif
+    'inter': 'Inter, sans-serif',
+    'poppins': 'Poppins, sans-serif',
+    'montserrat': 'Montserrat, sans-serif',
+    'roboto': 'Roboto, sans-serif',
+    'opensans': 'Open Sans, sans-serif',
+    'lato': 'Lato, sans-serif',
+    'nunito': 'Nunito, sans-serif',
+    'sourcesans': 'Source Sans Pro, sans-serif',
+    'worksans': 'Work Sans, sans-serif',
+    'firasans': 'Fira Sans, sans-serif',
+    'dmsans': 'DM Sans, sans-serif',
+    'rubik': 'Rubik, sans-serif',
 
-  const font = fontOptions.find(f => f.id === profile.display_name_font) || fontOptions[4]
+    // Classic Serif
+    'merriweather': 'Merriweather, serif',
+    'playfair': 'Playfair Display, serif',
+    'crimson': 'Crimson Text, serif',
+    'lora': 'Lora, serif',
+    'cormorant': 'Cormorant Garamond, serif',
+    'ebgaramond': 'EB Garamond, serif',
+    'librebaskerville': 'Libre Baskerville, serif',
+    'oldstandard': 'Old Standard TT, serif',
+    'spectral': 'Spectral, serif',
+    'vollkorn': 'Vollkorn, serif',
+
+    // Display & Stylized
+    'orbitron': 'Orbitron, sans-serif',
+    'raleway': 'Raleway, sans-serif',
+    'oswald': 'Oswald, sans-serif',
+    'bebas': 'Bebas Neue, sans-serif',
+    'anton': 'Anton, sans-serif',
+    'bangers': 'Bangers, cursive',
+    'fredoka': 'Fredoka One, cursive',
+    'righteous': 'Righteous, cursive',
+    'comfortaa': 'Comfortaa, cursive',
+    'quicksand': 'Quicksand, sans-serif',
+    'archivo': 'Archivo Black, sans-serif',
+    'bungee': 'Bungee, cursive',
+    'creepster': 'Creepster, cursive',
+    'monoton': 'Monoton, cursive',
+    'pressstart': 'Press Start 2P, cursive',
+
+    // Script & Cursive
+    'dancing': 'Dancing Script, cursive',
+    'pacifico': 'Pacifico, cursive',
+    'caveat': 'Caveat, cursive',
+    'greatvibes': 'Great Vibes, cursive',
+    'sacramento': 'Sacramento, cursive',
+    'allura': 'Allura, cursive',
+    'satisfy': 'Satisfy, cursive',
+    'kaushan': 'Kaushan Script, cursive',
+    'amatic': 'Amatic SC, cursive',
+    'shadows': 'Shadows Into Light, cursive',
+    'indie': 'Indie Flower, cursive',
+    'permanent': 'Permanent Marker, cursive',
+    'cookie': 'Cookie, cursive',
+    'tangerine': 'Tangerine, cursive',
+    'lobster': 'Lobster, cursive',
+    'courgette': 'Courgette, cursive',
+
+    // Monospace & Tech
+    'firacode': 'Fira Code, monospace',
+    'sourcecodepro': 'Source Code Pro, monospace',
+    'robotomono': 'Roboto Mono, monospace',
+    'spacemono': 'Space Mono, monospace',
+    'jetbrains': 'JetBrains Mono, monospace',
+    'ubuntumono': 'Ubuntu Mono, monospace',
+
+    // Unique & Artistic
+    'nosifer': 'Nosifer, cursive',
+    'eater': 'Eater, cursive',
+    'chela': 'Chela One, cursive',
+    'fascinate': 'Fascinate, cursive',
+    'griffy': 'Griffy, cursive',
+    'henny': 'Henny Penny, cursive',
+    'jolly': 'Jolly Lodger, cursive',
+    'kalam': 'Kalam, cursive',
+    'lacquer': 'Lacquer, cursive',
+    'luckiest': 'Luckiest Guy, cursive',
+    'mystery': 'Mystery Quest, cursive',
+    'pirata': 'Pirata One, cursive',
+    'rye': 'Rye, cursive',
+    'smokum': 'Smokum, cursive',
+    'special': 'Special Elite, cursive',
+    'trade': 'Trade Winds, cursive',
+    'vampiro': 'Vampiro One, cursive',
+    'papyrus': 'Papyrus, fantasy',
+
+    // Elegant & Luxury
+    'cinzel': 'Cinzel, serif',
+    'cinzeldecorative': 'Cinzel Decorative, cursive',
+    'forum': 'Forum, cursive',
+    'marcellus': 'Marcellus, serif',
+    'trajan': 'Trajan Pro, serif',
+    'yeseva': 'Yeseva One, cursive',
+    'abril': 'Abril Fatface, cursive',
+    'cardo': 'Cardo, serif',
+    'sorts': 'Sorts Mill Goudy, serif',
+    'unna': 'Unna, serif',
+
+    // System Fonts
+    'sansserif': 'sans-serif'
+  }
+
+  // Get the actual font to use - check localStorage for original font selection first
+  let fontToUse = profile.display_name_font || 'inter'
+  let colorToUse = profile.display_name_color || '#FFFFFF'
+
+  try {
+    const storedFontStyling = localStorage.getItem(`fontStyling_${profile.user_id}`)
+    if (storedFontStyling) {
+      const parsed = JSON.parse(storedFontStyling)
+      console.log('ProfilePage - Found font styling in localStorage:', parsed)
+      // Use the original font selection, not the mapped one
+      fontToUse = parsed.original_font || fontToUse
+      colorToUse = parsed.display_name_color || colorToUse
+    }
+  } catch (error) {
+    console.error('Error reading font styling from localStorage:', error)
+  }
+
+  // Get font family from map, fallback to Inter if not found
+  const fontFamily = fontMap[fontToUse] || 'Inter, sans-serif'
+
+  console.log('ProfilePage - Font styling:', {
+    database_font: profile.display_name_font,
+    final_font: fontToUse,
+    final_fontFamily: fontFamily,
+    final_color: colorToUse
+  })
+
   return {
-    fontFamily: font.family,
-    color: profile.display_name_color || '#FFFFFF',
+    fontFamily,
+    color: colorToUse,
     fontWeight: '700',
     letterSpacing: '0.015em',
     lineHeight: '1.06'
@@ -41,22 +164,111 @@ export default function ProfilePage() {
   // Only fetch products after profile is loaded
   const { products, loading: productsLoading, trackClick } = useProducts(profile?.user_id)
 
-  // Track profile view
+  // Load Google Fonts dynamically when profile loads
   useEffect(() => {
-    const trackProfileView = async () => {
-      if (!profile?.user_id) return
+    if (!profile) return
 
-      try {
-        await supabase.functions.invoke('track-profile-view', {
-          body: { profileUserId: profile.user_id }
-        })
-      } catch (err) {
-        console.log('Profile view tracking failed (non-critical):', err)
+    const loadGoogleFonts = () => {
+      // List of all Google Fonts used in the app
+      const googleFonts = [
+        'Inter:wght@400;700',
+        'Poppins:wght@400;700',
+        'Montserrat:wght@400;700',
+        'Roboto:wght@400;700',
+        'Open+Sans:wght@400;700',
+        'Lato:wght@400;700',
+        'Nunito:wght@400;700',
+        'Source+Sans+Pro:wght@400;700',
+        'Work+Sans:wght@400;700',
+        'Fira+Sans:wght@400;700',
+        'DM+Sans:wght@400;700',
+        'Rubik:wght@400;700',
+        'Merriweather:wght@400;700',
+        'Playfair+Display:wght@400;700',
+        'Crimson+Text:wght@400;700',
+        'Lora:wght@400;700',
+        'Cormorant+Garamond:wght@400;700',
+        'EB+Garamond:wght@400;700',
+        'Libre+Baskerville:wght@400;700',
+        'Old+Standard+TT:wght@400;700',
+        'Spectral:wght@400;700',
+        'Vollkorn:wght@400;700',
+        'Orbitron:wght@400;700',
+        'Raleway:wght@400;700',
+        'Oswald:wght@400;700',
+        'Bebas+Neue:wght@400',
+        'Anton:wght@400',
+        'Bangers:wght@400',
+        'Fredoka+One:wght@400',
+        'Righteous:wght@400',
+        'Comfortaa:wght@400;700',
+        'Quicksand:wght@400;700',
+        'Archivo+Black:wght@400',
+        'Bungee:wght@400',
+        'Creepster:wght@400',
+        'Monoton:wght@400',
+        'Press+Start+2P:wght@400',
+        'Dancing+Script:wght@400;700',
+        'Pacifico:wght@400',
+        'Caveat:wght@400;700',
+        'Great+Vibes:wght@400',
+        'Sacramento:wght@400',
+        'Allura:wght@400',
+        'Satisfy:wght@400',
+        'Kaushan+Script:wght@400',
+        'Amatic+SC:wght@400;700',
+        'Shadows+Into+Light:wght@400',
+        'Indie+Flower:wght@400',
+        'Permanent+Marker:wght@400',
+        'Cookie:wght@400',
+        'Tangerine:wght@400;700',
+        'Lobster:wght@400',
+        'Courgette:wght@400',
+        'Fira+Code:wght@400;700',
+        'Source+Code+Pro:wght@400;700',
+        'Roboto+Mono:wght@400;700',
+        'Space+Mono:wght@400;700',
+        'JetBrains+Mono:wght@400;700',
+        'Ubuntu+Mono:wght@400;700',
+        'Nosifer:wght@400',
+        'Eater:wght@400',
+        'Chela+One:wght@400',
+        'Fascinate:wght@400',
+        'Griffy:wght@400',
+        'Henny+Penny:wght@400',
+        'Jolly+Lodger:wght@400',
+        'Kalam:wght@400;700',
+        'Lacquer:wght@400',
+        'Luckiest+Guy:wght@400',
+        'Mystery+Quest:wght@400',
+        'Pirata+One:wght@400',
+        'Rye:wght@400',
+        'Smokum:wght@400',
+        'Special+Elite:wght@400',
+        'Trade+Winds:wght@400',
+        'Vampiro+One:wght@400',
+        'Cinzel:wght@400;700',
+        'Cinzel+Decorative:wght@400;700',
+        'Forum:wght@400',
+        'Marcellus:wght@400',
+        'Yeseva+One:wght@400',
+        'Abril+Fatface:wght@400',
+        'Cardo:wght@400;700',
+        'Sorts+Mill+Goudy:wght@400',
+        'Unna:wght@400;700'
+      ]
+
+      if (!document.querySelector('#profile-google-fonts')) {
+        const link = document.createElement('link')
+        link.id = 'profile-google-fonts'
+        link.href = `https://fonts.googleapis.com/css2?${googleFonts.join('&family=')}&display=swap`
+        link.rel = 'stylesheet'
+        document.head.appendChild(link)
       }
     }
 
-    trackProfileView()
-  }, [profile?.user_id])
+    loadGoogleFonts()
+  }, [profile])
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -267,6 +479,49 @@ const fetchProfile = async () => {
   const isDarkBackground = getLuminance(primaryColor) < 128
   const textColor = isDarkBackground ? '#FFFFFF' : '#000000'
 
+  // Get card styling based on profile settings
+  // Since card styling fields don't exist in database yet, check localStorage
+  const getCardStyling = () => {
+    try {
+      const storedStyling = localStorage.getItem(`cardStyling_${profile.user_id}`)
+      if (storedStyling) {
+        const parsed = JSON.parse(storedStyling)
+        console.log('ProfilePage - Found card styling in localStorage:', parsed)
+        return {
+          cardColor: parsed.card_color || '#FFFFFF',
+          cardTextColor: parsed.card_text_color || '#000000'
+        }
+      }
+    } catch (error) {
+      console.error('Error reading card styling from localStorage:', error)
+    }
+    
+    // Fallback to database values or defaults
+    return {
+      cardColor: profile.card_color || '#FFFFFF',
+      cardTextColor: profile.card_text_color || '#000000'
+    }
+  }
+
+  const { cardColor, cardTextColor } = getCardStyling()
+  
+  // Debug logging for card styling
+  console.log('ProfilePage - Card styling:', {
+    database_card_color: profile.card_color,
+    database_card_text_color: profile.card_text_color,
+    final_cardColor: cardColor,
+    final_cardTextColor: cardTextColor
+  })
+
+  // Convert hex to rgba for glass effect
+  const hexToRgba = (hex: string, alpha: number) => {
+    const cleanHex = hex.replace('#', '')
+    const r = parseInt(cleanHex.substring(0, 2), 16)
+    const g = parseInt(cleanHex.substring(2, 4), 16)
+    const b = parseInt(cleanHex.substring(4, 6), 16)
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  }
+
   // Background styles based on profile settings
   const backgroundImage = profile.background_image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=2070&auto=format&fit=crop'
   const backgroundType = profile.background_type || 'image'
@@ -298,15 +553,15 @@ const fetchProfile = async () => {
     <>
       <style>{`
         .glass-panel {
-          background: rgba(255, 255, 255, 0.2);
+          background: ${hexToRgba(cardColor, 0.2)};
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.3);
+          border: 1px solid ${hexToRgba(cardColor, 0.3)};
           box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
 
         .product-text {
-          color: ${textColor};
+          color: ${cardTextColor};
           transition: color 0.5s ease-in-out;
         }
 
@@ -347,15 +602,15 @@ const fetchProfile = async () => {
           <header className="p-4 md:p-8 text-white text-center">
             <div className="max-w-4xl mx-auto p-6 md:p-8 glass-panel rounded-xl">
               <div className="flex flex-col items-center space-y-4">
-                <div>
+                <div className="text-center">
                   <h1
-                    className="text-3xl md:text-4xl font-bold mb-2"
+                    className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4"
                     style={getDisplayNameStyle(profile)}
                   >
                     {profile.display_name}
                   </h1>
                   {profile.bio && (
-                    <p className="text-base md:text-lg product-text opacity-80 mt-2 max-w-2xl">
+                    <p className="text-sm md:text-base product-text opacity-80 mt-3 max-w-2xl mx-auto">
                       {profile.bio}
                     </p>
                   )}
@@ -391,16 +646,21 @@ const fetchProfile = async () => {
                             setIsDropdownOpen(false)
                           }
                         }}
-                        className="w-full p-4 rounded-lg bg-white shadow-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer flex items-center justify-between hover:shadow-xl transition-all border border-gray-200"
+                        className="w-full p-4 rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer flex items-center justify-between hover:shadow-xl transition-all border"
+                        style={{
+                          backgroundColor: cardColor,
+                          color: cardTextColor,
+                          borderColor: cardColor === '#FFFFFF' ? '#E5E7EB' : cardColor
+                        }}
                       >
                         <div className="flex items-center space-x-3">
-                          <currentFilter.icon className="w-5 h-5 text-gray-600" />
+                          <currentFilter.icon className="w-5 h-5" style={{ color: cardTextColor }} />
                           <span className="font-medium">{currentFilter.label}</span>
-                          <span className="text-sm text-gray-500">({currentFilter.count})</span>
+                          <span className="text-sm opacity-70">({currentFilter.count})</span>
                         </div>
-                        <ChevronDown className={`h-4 w-4 text-gray-600 transition-transform duration-200 ${
+                        <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${
                           isDropdownOpen ? 'rotate-180' : ''
-                        }`} />
+                        }`} style={{ color: cardTextColor }} />
                       </button>
 
                       {/* Dropdown Menu */}
@@ -460,7 +720,10 @@ const fetchProfile = async () => {
                     <div
                       key={product.id}
                       className="product-card rounded-lg overflow-hidden glass-panel cursor-pointer hover:scale-105 transition-transform duration-300"
-                      onClick={() => trackClick(product.id, product.affiliate_url)}
+                      onClick={() => {
+                        console.log('Product card clicked:', product.id, product.title)
+                        trackClick(product.id, product.affiliate_url)
+                      }}
                     >
                       {product.image_url ? (
                         <img
@@ -488,6 +751,7 @@ const fetchProfile = async () => {
                           style={{ backgroundColor: primaryColor, color: 'white' }}
                           onClick={(e) => {
                             e.stopPropagation()
+                            console.log('Product button clicked:', product.id, product.title)
                             trackClick(product.id, product.affiliate_url)
                           }}
                         >

@@ -1,65 +1,103 @@
-import React from 'react'
+import { Suspense, lazy } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
+import { ErrorProvider } from './context/ErrorContext'
+import ErrorBoundary from './components/ErrorBoundary'
 import ProtectedRoute from './components/ProtectedRoute'
+import AuthRedirect from './components/AuthRedirect'
+import MetaProvider from './components/MetaProvider'
+import { PageLoadingSpinner } from './components/LoadingSpinner'
 
-// Pages
-import LandingPage from './pages/LandingPage'
-import SignUpPage from './pages/SignUpPage'
-import LoginPage from './pages/LoginPage'
-import DashboardPage from './pages/DashboardPage'
-import ProfilePage from './pages/ProfilePage'
-import PricingPage from './pages/PricingPage'
-import TestPage from './pages/TestPage'
-import CreateProfilePage from './pages/CreateProfilePage'
-import AdminPage from './pages/AdminPage'
+// Lazy load pages for better performance
+const LandingPage = lazy(() => import('./pages/LandingPage'))
+const SignUpPage = lazy(() => import('./pages/SignUpPage'))
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
+const ProfilePage = lazy(() => import('./pages/ProfilePage'))
+const PricingPage = lazy(() => import('./pages/PricingPage'))
+const TestPage = lazy(() => import('./pages/TestPage'))
+const CreateProfilePage = lazy(() => import('./pages/CreateProfilePage'))
+const AdminPage = lazy(() => import('./pages/AdminPage'))
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 // Global styles
 import './App.css'
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="App">
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/test" element={<TestPage />} />
-            <Route path="/create-profile" element={<CreateProfilePage />} />
+    <ErrorBoundary>
+      <ErrorProvider>
+        <AuthProvider>
+          <Router>
+            <MetaProvider />
+            <div className="App">
+              <Suspense fallback={<PageLoadingSpinner />}>
+                <div className="route-transition">
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/pricing" element={<PricingPage />} />
+                    <Route path="/test" element={<TestPage />} />
 
-            {/* Public Profile Routes */}
-            <Route path="/u/:username" element={<ProfilePage />} />
+                    {/* Auth Routes - Redirect authenticated users */}
+                    <Route
+                      path="/signup"
+                      element={
+                        <AuthRedirect>
+                          <SignUpPage />
+                        </AuthRedirect>
+                      }
+                    />
+                    <Route
+                      path="/login"
+                      element={
+                        <AuthRedirect>
+                          <LoginPage />
+                        </AuthRedirect>
+                      }
+                    />
 
-            {/* Protected Routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
+                    {/* Public Profile Routes */}
+                    <Route path="/u/:username" element={<ProfilePage />} />
 
-            {/* Admin Routes */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute adminOnly>
-                  <AdminPage />
-                </ProtectedRoute>
-              }
-            />
+                    {/* Protected Routes */}
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <ProtectedRoute>
+                          <DashboardPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/create-profile"
+                      element={
+                        <ProtectedRoute>
+                          <CreateProfilePage />
+                        </ProtectedRoute>
+                      }
+                    />
 
-            {/* Catch all route - redirect to home */}
-            <Route path="*" element={<LandingPage />} />
-          </Routes>
-        </div>
-      </Router>
-    </AuthProvider>
+                    {/* Admin Routes */}
+                    <Route
+                      path="/admin"
+                      element={
+                        <ProtectedRoute requiredRole="admin">
+                          <AdminPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* 404 Page */}
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Routes>
+                </div>
+              </Suspense>
+            </div>
+          </Router>
+        </AuthProvider>
+      </ErrorProvider>
+    </ErrorBoundary>
   )
 }
 

@@ -171,10 +171,10 @@ export default function SignUpPage() {
               </div>
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Create Your Account
+              Get Your Free Link
             </h1>
             <p className="text-gray-600">
-              Start building your affiliate empire today
+              Step 1: Get your link • Step 2: Add products • Step 3: Start earning
             </p>
           </div>
 

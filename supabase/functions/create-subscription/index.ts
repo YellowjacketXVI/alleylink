@@ -85,17 +85,22 @@ serve(async (req) => {
       )
     }
 
-    // Check if user already has an active subscription
-    if (profile.subscription_status === 'active' && profile.plan_type === 'pro') {
+    // Check if user already has an active subscription for the requested plan
+    if (profile.subscription_status === 'active' && profile.plan_type === planType) {
       return new Response(
         JSON.stringify({
           data: {
             alreadySubscribed: true,
-            message: 'User already has an active subscription'
+            message: `User already has an active ${planType} subscription`
           }
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // Allow upgrading from basic to pro
+    if (profile.subscription_status === 'active' && profile.plan_type === 'basic' && planType === 'pro') {
+      // This will create a new subscription, Stripe will handle the upgrade
     }
 
     // Create or get Stripe customer
@@ -118,13 +123,25 @@ serve(async (req) => {
         .eq('user_id', user.id)
     }
 
+    // Get the correct price ID based on plan type with proper fallbacks
+    const priceId = planType === 'basic'
+      ? (Deno.env.get('STRIPE_PRICE_BASIC_MONTHLY') || 'price_1SB68VDGBbR8XeGs5EqAmqyu')
+      : (Deno.env.get('STRIPE_PRICE_PRO_MONTHLY') || 'price_1Rrki6DGBbR8XeGsrr4iz7TY')
+
+    console.log('Creating subscription for planType:', planType, 'with priceId:', priceId)
+
+    // Validate that we have a price ID
+    if (!priceId) {
+      throw new Error(`No price ID configured for plan type: ${planType}`)
+    }
+
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [
         {
-          price: Deno.env.get('STRIPE_PRICE_PRO_MONTHLY'),
+          price: priceId,
           quantity: 1,
         },
       ],

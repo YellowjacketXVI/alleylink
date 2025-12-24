@@ -12,6 +12,12 @@ export const stripe = loadStripe(stripePublishableKey)
 // Stripe price configuration
 export const STRIPE_CONFIG = {
   prices: {
+    basic: {
+      monthly: import.meta.env.VITE_STRIPE_PRICE_BASIC_MONTHLY || 'price_1SB68VDGBbR8XeGs5EqAmqyu',
+      amount: 2.99,
+      currency: 'usd',
+      interval: 'month'
+    },
     pro: {
       monthly: import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY || 'price_1Rrki6DGBbR8XeGsrr4iz7TY',
       amount: 4.99,

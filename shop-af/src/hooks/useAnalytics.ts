@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 
@@ -10,31 +10,50 @@ interface ProductClickAnalytics {
 
 interface AnalyticsData {
   totalClicks: number
-  profileViews: number
   productClicks: ProductClickAnalytics[]
 }
 
 export function useAnalytics() {
   const [analytics, setAnalytics] = useState<AnalyticsData>({
     totalClicks: 0,
-    profileViews: 0,
     productClicks: []
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { user } = useAuth()
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     if (user?.id) {
+      // Initial fetch
       fetchAnalytics()
+      
+      // Set up real-time updates every 300ms (skip loading state for updates)
+      intervalRef.current = setInterval(() => {
+        fetchAnalytics(true)
+      }, 300)
+    }
+
+    // Cleanup interval on unmount or user change
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
     }
   }, [user?.id])
 
-  const fetchAnalytics = async () => {
-    if (!user?.id) return
+  const fetchAnalytics = async (skipLoading = false) => {
+    if (!user?.id) {
+      console.log('[Analytics] No user ID available')
+      return
+    }
 
     try {
-      setLoading(true)
+      console.log('[Analytics] Fetching analytics for user:', user.id)
+      if (!skipLoading) {
+        setLoading(true)
+      }
       setError(null)
 
       // 1) Fetch this user's active products (id + title)
@@ -47,28 +66,11 @@ export function useAnalytics() {
       if (productsError) throw productsError
 
       const productIds = (products || []).map(p => p.id)
+      console.log('[Analytics] Found products:', productIds.length)
 
       // Early return if no products
       if (!productIds.length) {
-        // Profile views still counted even when no products
-        let profileViewCount = 0
-        try {
-          const { data: profileViewsData, error: profileViewsError } = await supabase
-            .from('profile_view_analytics')
-            .select('id')
-            .eq('profile_user_id', user.id)
-
-          if (profileViewsError && !profileViewsError.message?.includes('does not exist')) {
-            throw profileViewsError
-          }
-          profileViewCount = profileViewsData?.length || 0
-        } catch (pvErr: any) {
-          if (!pvErr.message?.includes('does not exist')) {
-            console.error('Profile view analytics error:', pvErr)
-          }
-        }
-
-        setAnalytics({ totalClicks: 0, profileViews: profileViewCount, productClicks: [] })
+        setAnalytics({ totalClicks: 0, productClicks: [] })
         return
       }
 
@@ -91,32 +93,13 @@ export function useAnalytics() {
         clickRows = []
       }
 
-      // 3) Fetch profile view analytics count for this user
-      let profileViews = 0
-      try {
-        const { data, error: profileViewError } = await supabase
-          .from('profile_view_analytics')
-          .select('id')
-          .eq('profile_user_id', user.id)
-
-        if (profileViewError && !profileViewError.message?.includes('does not exist')) {
-          throw profileViewError
-        }
-        profileViews = data?.length || 0
-      } catch (err: any) {
-        if (!err.message?.includes('does not exist')) {
-          console.error('Profile view analytics error:', err)
-        }
-        profileViews = 0
-      }
-
-      // 4) Aggregate clicks per product_id
+      // 3) Aggregate clicks per product_id
       const counts = new Map<number, number>()
       for (const row of clickRows) {
         counts.set(row.product_id, (counts.get(row.product_id) || 0) + 1)
       }
 
-      // 5) Join counts with product titles
+      // 4) Join counts with product titles
       const productTitleById = new Map<number, string>(products!.map(p => [p.id, p.title]))
       const productClicks: ProductClickAnalytics[] = Array.from(counts.entries()).map(([product_id, count]) => ({
         product_id,
@@ -124,20 +107,24 @@ export function useAnalytics() {
         click_count: count,
       }))
 
-      // 6) Sort by clicks desc and compute totals
+      // 5) Sort by clicks desc and compute totals
       productClicks.sort((a, b) => b.click_count - a.click_count)
       const totalClicks = clickRows.length
 
-      setAnalytics({
+      const analyticsData = {
         totalClicks,
-        profileViews,
-        productClicks,
-      })
+        productClicks
+      }
+
+      console.log('[Analytics] Final analytics data:', analyticsData)
+      setAnalytics(analyticsData)
     } catch (err: any) {
-      console.error('Analytics fetch error:', err)
+      console.error('[Analytics] Fetch error:', err)
       setError(err.message)
     } finally {
-      setLoading(false)
+      if (!skipLoading) {
+        setLoading(false)
+      }
     }
   }
 
