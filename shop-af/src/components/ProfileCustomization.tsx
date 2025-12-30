@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useImageUpload } from '../hooks/useImageUpload'
 import { supabase } from '../lib/supabase'
-import { Palette, Image, Layers, Save, Upload, Type, Sparkles, ChevronDown, Store, X, Eye, EyeOff } from 'lucide-react'
+import { Palette, Image, Layers, Save, Upload, Type, Sparkles, ChevronDown, Store, X, ExternalLink, Eye, EyeOff, Maximize2, Minimize2, GripVertical } from 'lucide-react'
 
 export default function ProfileCustomization() {
   const { profile, refreshProfile } = useAuth()
@@ -10,50 +10,30 @@ export default function ProfileCustomization() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [fontDropdownOpen, setFontDropdownOpen] = useState(false)
-  const [showFloatingPreview, setShowFloatingPreview] = useState(false)
-  const [previewHidden, setPreviewHidden] = useState(false)
-  const livePreviewRef = useRef<HTMLDivElement>(null)
+  const [activeSection, setActiveSection] = useState<'material' | 'title' | 'background'>('material')
+  const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false)
+  const [miniPreviewVisible, setMiniPreviewVisible] = useState(true)
+  const [miniPreviewPosition, setMiniPreviewPosition] = useState({ x: 16, y: typeof window !== 'undefined' ? window.innerHeight - 170 : 400 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const previewContainerRef = useRef<HTMLDivElement>(null)
+  const miniPreviewRef = useRef<HTMLDivElement>(null)
 
-  // Initial settings from profile - check localStorage for original font selection
+  // Initial settings from profile - all values loaded directly from database
   const getInitialSettings = () => {
-    let initialFont = profile?.display_name_font || 'inter'
-    let initialColor = profile?.display_name_color || '#FFFFFF'
-    let initialCardStyle = profile?.card_style || 'light'
-    let initialCardColor = profile?.card_color || '#FFFFFF'
-    let initialCardTextColor = profile?.card_text_color || '#000000'
-
-    // Check localStorage for original font selection
-    try {
-      const storedFontStyling = localStorage.getItem(`fontStyling_${profile?.user_id}`)
-      if (storedFontStyling) {
-        const parsed = JSON.parse(storedFontStyling)
-        console.log('ProfileCustomization - Found font styling in localStorage:', parsed)
-        initialFont = parsed.original_font || initialFont
-        initialColor = parsed.display_name_color || initialColor
-      }
-
-      const storedCardStyling = localStorage.getItem(`cardStyling_${profile?.user_id}`)
-      if (storedCardStyling) {
-        const parsed = JSON.parse(storedCardStyling)
-        console.log('ProfileCustomization - Found card styling in localStorage:', parsed)
-        initialCardStyle = parsed.card_style || initialCardStyle
-        initialCardColor = parsed.card_color || initialCardColor
-        initialCardTextColor = parsed.card_text_color || initialCardTextColor
-      }
-    } catch (error) {
-      console.error('Error reading styling from localStorage:', error)
-    }
-
     return {
       background_type: profile?.background_type || 'image',
       background_image: profile?.background_image || '',
       background_gradient_direction: profile?.background_gradient_direction || 'white',
+      background_gradient_type: (profile?.background_gradient_type as 'linear' | 'radial' | 'diamond' | 'vignette') || 'linear',
       primary_color: profile?.primary_color || '#3B82F6',
-      display_name_color: initialColor,
-      display_name_font: initialFont,
-      card_style: initialCardStyle,
-      card_color: initialCardColor,
-      card_text_color: initialCardTextColor
+      display_name_color: profile?.display_name_color || '#FFFFFF',
+      display_name_font: profile?.display_name_font || 'inter',
+      card_style: profile?.card_style || 'light',
+      card_color: profile?.card_color || '#FFFFFF',
+      card_text_color: profile?.card_text_color || '#000000',
+      glass_mode: (profile?.glass_mode as 'matte' | 'gloss') || 'matte',
+      glass_tint: profile?.glass_tint || '#FFFFFF'
     }
   }
 
@@ -76,21 +56,14 @@ export default function ProfileCustomization() {
     setMessage('')
   }
 
-  // Scroll detection for floating preview
-  useEffect(() => {
-    const handleScroll = () => {
-      if (livePreviewRef.current) {
-        const rect = livePreviewRef.current.getBoundingClientRect()
-        const isVisible = rect.top < window.innerHeight && rect.bottom > 0
-        setShowFloatingPreview(hasChanges && !isVisible)
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    handleScroll() // Check initial state
-
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [hasChanges])
+  // Adaptive text scaling based on text length (inspired by glassmorphism generator)
+  const calculateTitleScale = (textLength: number): number => {
+    if (textLength < 10) return 1
+    if (textLength < 20) return 0.85
+    if (textLength < 30) return 0.7
+    if (textLength < 50) return 0.55
+    return 0.45
+  }
 
   // Load Google Fonts dynamically
   useEffect(() => {
@@ -235,164 +208,45 @@ export default function ProfileCustomization() {
     setMessage('')
 
     try {
-      // Map new fonts to allowed database values
-      const allowedFonts = ['merriweather', 'poppins', 'orbitron', 'montserrat', 'inter', 'papyrus', 'sansserif']
-      let fontToSave = settings.display_name_font
-
-      // If the selected font is not in the allowed list, map it to a similar allowed font
-      if (!allowedFonts.includes(settings.display_name_font)) {
-        const fontMappings: Record<string, string> = {
-          // Modern fonts -> inter or poppins
-          'roboto': 'inter',
-          'opensans': 'inter',
-          'lato': 'inter',
-          'nunito': 'poppins',
-          'sourcesans': 'inter',
-          'worksans': 'inter',
-          'firasans': 'inter',
-          'dmsans': 'inter',
-          'rubik': 'poppins',
-          
-          // Serif fonts -> merriweather
-          'playfair': 'merriweather',
-          'crimson': 'merriweather',
-          'lora': 'merriweather',
-          'cormorant': 'merriweather',
-          'ebgaramond': 'merriweather',
-          'librebaskerville': 'merriweather',
-          'oldstandard': 'merriweather',
-          'spectral': 'merriweather',
-          'vollkorn': 'merriweather',
-          
-          // Display fonts -> orbitron
-          'raleway': 'orbitron',
-          'oswald': 'orbitron',
-          'bebas': 'orbitron',
-          'anton': 'orbitron',
-          'bangers': 'orbitron',
-          'fredoka': 'orbitron',
-          'righteous': 'orbitron',
-          'comfortaa': 'orbitron',
-          'quicksand': 'orbitron',
-          'archivo': 'orbitron',
-          'bungee': 'orbitron',
-          'creepster': 'orbitron',
-          'monoton': 'orbitron',
-          'pressstart': 'orbitron',
-          
-          // Script fonts -> papyrus
-          'dancing': 'papyrus',
-          'pacifico': 'papyrus',
-          'caveat': 'papyrus',
-          'greatvibes': 'papyrus',
-          'sacramento': 'papyrus',
-          'allura': 'papyrus',
-          'satisfy': 'papyrus',
-          'kaushan': 'papyrus',
-          'amatic': 'papyrus',
-          'shadows': 'papyrus',
-          'indie': 'papyrus',
-          'permanent': 'papyrus',
-          'cookie': 'papyrus',
-          'tangerine': 'papyrus',
-          'lobster': 'papyrus',
-          'courgette': 'papyrus',
-          
-          // Monospace fonts -> sansserif
-          'firacode': 'sansserif',
-          'sourcecodepro': 'sansserif',
-          'robotomono': 'sansserif',
-          'spacemono': 'sansserif',
-          'jetbrains': 'sansserif',
-          'ubuntumono': 'sansserif',
-          
-          // Artistic fonts -> papyrus
-          'nosifer': 'papyrus',
-          'eater': 'papyrus',
-          'chela': 'papyrus',
-          'fascinate': 'papyrus',
-          'griffy': 'papyrus',
-          'henny': 'papyrus',
-          'jolly': 'papyrus',
-          'kalam': 'papyrus',
-          'lacquer': 'papyrus',
-          'luckiest': 'papyrus',
-          'mystery': 'papyrus',
-          'pirata': 'papyrus',
-          'rye': 'papyrus',
-          'smokum': 'papyrus',
-          'special': 'papyrus',
-          'trade': 'papyrus',
-          'vampiro': 'papyrus',
-          
-          // Luxury fonts -> merriweather
-          'cinzel': 'merriweather',
-          'cinzeldecorative': 'merriweather',
-          'forum': 'merriweather',
-          'marcellus': 'merriweather',
-          'trajan': 'merriweather',
-          'yeseva': 'merriweather',
-          'abril': 'merriweather',
-          'cardo': 'merriweather',
-          'sorts': 'merriweather',
-          'unna': 'merriweather'
-        }
-        
-        fontToSave = fontMappings[settings.display_name_font] || 'inter'
-      }
-
-      // Only include fields that exist in the database
+      // Include all customization fields in the database update
+      // Font is now saved directly without mapping (database constraint removed)
       const updateData = {
         background_type: settings.background_type,
         background_image: settings.background_image,
         background_gradient_direction: settings.background_gradient_direction,
+        background_gradient_type: settings.background_gradient_type, // Now saved to database
         primary_color: settings.primary_color,
         display_name_color: settings.display_name_color,
-        display_name_font: fontToSave, // Use mapped font
+        display_name_font: settings.display_name_font, // Save font directly (no mapping needed)
+        // Card styling fields
+        card_style: settings.card_style,
+        card_color: settings.card_color,
+        card_text_color: settings.card_text_color,
+        glass_mode: settings.glass_mode,
+        glass_tint: settings.glass_tint,
         updated_at: new Date().toISOString()
       }
 
       console.log('Saving profile customization:', updateData)
-      console.log(`Font mapping: ${settings.display_name_font} -> ${fontToSave}`)
 
-      const { error } = await supabase
+      const { data: updatedData, error } = await supabase
         .from('profiles')
         .update(updateData)
         .eq('user_id', profile.user_id)
+        .select('*')
+        .single()
 
       if (error) {
         console.error('Database error:', error)
         throw error
       }
 
-      // Store card styling AND original font selection in localStorage temporarily until database migration
-      const cardStyling = {
-        card_style: settings.card_style,
-        card_color: settings.card_color,
-        card_text_color: settings.card_text_color,
-        user_id: profile.user_id
-      }
-      localStorage.setItem(`cardStyling_${profile.user_id}`, JSON.stringify(cardStyling))
-      console.log('Card styling saved to localStorage:', cardStyling)
-
-      // Store original font selection for ProfilePage to use
-      const fontStyling = {
-        original_font: settings.display_name_font, // Store the original font selection
-        mapped_font: fontToSave, // Store the database-compatible font
-        display_name_color: settings.display_name_color,
-        user_id: profile.user_id
-      }
-      localStorage.setItem(`fontStyling_${profile.user_id}`, JSON.stringify(fontStyling))
-      console.log('Font styling saved to localStorage:', fontStyling)
+      console.log('Profile updated successfully, returned data:', updatedData)
 
       // Refresh the profile to get updated data
       await refreshProfile()
-      
-      const fontMessage = fontToSave !== settings.display_name_font 
-        ? ` (Font mapped to ${fontToSave} for database compatibility)`
-        : ''
-      
-      setMessage(`Profile customization saved successfully!${fontMessage} (Card styling temporarily stored locally until database update)`)
+
+      setMessage('Profile customization saved successfully!')
 
       setTimeout(() => setMessage(''), 5000)
     } catch (error: any) {
@@ -403,9 +257,37 @@ export default function ProfileCustomization() {
     }
   }
 
+  // Generate gradient based on type and direction
+  const getGradientStyle = () => {
+    const targetColor = settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'
+    const primaryColor = settings.primary_color
+
+    switch (settings.background_gradient_type) {
+      case 'radial':
+        return {
+          background: `radial-gradient(circle at center, ${primaryColor} 0%, ${targetColor} 100%)`
+        }
+      case 'diamond':
+        // Diamond effect using conic gradient
+        return {
+          background: `conic-gradient(from 45deg at 50% 50%, ${primaryColor} 0deg, ${targetColor} 90deg, ${primaryColor} 180deg, ${targetColor} 270deg, ${primaryColor} 360deg)`
+        }
+      case 'vignette':
+        // Vignette effect - dark/light edges with primary color in center
+        return {
+          background: `radial-gradient(ellipse at center, ${primaryColor} 0%, ${primaryColor} 40%, ${targetColor} 100%)`
+        }
+      case 'linear':
+      default:
+        return {
+          background: `linear-gradient(to right, ${primaryColor}, ${targetColor})`
+        }
+    }
+  }
+
   const previewStyle = () => {
     const backgroundImage = settings.background_image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=2070&auto=format&fit=crop'
-    
+
     if (settings.background_type === 'image') {
       return {
         backgroundImage: `url('${backgroundImage}')`,
@@ -414,10 +296,7 @@ export default function ProfileCustomization() {
         backgroundRepeat: 'no-repeat'
       }
     } else if (settings.background_type === 'gradient') {
-      const targetColor = settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'
-      return {
-        backgroundImage: `linear-gradient(to right, ${settings.primary_color}, ${targetColor})`
-      }
+      return getGradientStyle()
     } else {
       return {
         backgroundColor: settings.primary_color
@@ -465,349 +344,753 @@ export default function ProfileCustomization() {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`
   }
 
+  // Convert hex to RGB string for CSS variables
+  const hexToRgb = (hex: string) => {
+    const cleanHex = hex.replace('#', '')
+    const r = parseInt(cleanHex.substring(0, 2), 16)
+    const g = parseInt(cleanHex.substring(2, 4), 16)
+    const b = parseInt(cleanHex.substring(4, 6), 16)
+    return `${r}, ${g}, ${b}`
+  }
+
+  // Get glass card style based on mode
+  const getGlassCardStyle = () => {
+    const glassColorRgb = hexToRgb(settings.glass_tint)
+
+    if (settings.glass_mode === 'gloss') {
+      return {
+        background: `linear-gradient(135deg, rgba(${glassColorRgb}, 0.4) 0%, rgba(${glassColorRgb}, 0.05) 50%, rgba(${glassColorRgb}, 0) 100%)`,
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        boxShadow: '8px 8px 20px 0 rgba(0, 0, 0, 0.3), inset 1px 1px 0 rgba(255, 255, 255, 0.6), inset -1px -1px 0 rgba(0, 0, 0, 0.1)'
+      }
+    }
+
+    return {
+      background: `rgba(${glassColorRgb}, 0.15)`,
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
+      border: `1px solid rgba(${glassColorRgb}, 0.3)`,
+      boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)'
+    }
+  }
+
   // Truncate bio to 100 characters
-  const truncatedBio = (profile?.bio || 'Your shop description will appear here').length > 100 
+  const truncatedBio = (profile?.bio || 'Your shop description will appear here').length > 100
     ? (profile?.bio || 'Your shop description will appear here').substring(0, 100) + '...'
     : (profile?.bio || 'Your shop description will appear here')
 
+  // Get bio text color - adapts to card_text_color for consistency with card styling
+  const getBioTextColor = () => {
+    return settings.card_text_color
+  }
+
   const selectedFont = fontOptions.find(f => f.id === settings.display_name_font)
   const fontCategories = [...new Set(fontOptions.map(f => f.category))]
+  const displayName = profile?.display_name || 'Your Shop Name'
+  const titleScale = calculateTitleScale(displayName.length)
+
+  // Drag handlers for mini preview
+  const handleDragStart = (e: React.TouchEvent | React.MouseEvent) => {
+    setIsDragging(true)
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+    setDragOffset({
+      x: clientX - miniPreviewPosition.x,
+      y: clientY - miniPreviewPosition.y
+    })
+  }
+
+  const handleDragMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDragging) return
+    e.preventDefault()
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+
+    // Calculate new position with bounds checking
+    const newX = Math.max(0, Math.min(window.innerWidth - 140, clientX - dragOffset.x))
+    const newY = Math.max(0, Math.min(window.innerHeight - 180, clientY - dragOffset.y))
+
+    setMiniPreviewPosition({ x: newX, y: newY })
+  }
+
+  const handleDragEnd = () => {
+    setIsDragging(false)
+  }
+
+  // Render the iPhone mockup preview (reusable for both desktop and modal)
+  const renderPreviewMockup = () => (
+    <div className="relative" style={{ width: '280px', height: '605px' }}>
+      {/* iPhone Frame */}
+            <div className="absolute inset-0 bg-black rounded-[2.5rem] shadow-2xl">
+              {/* Screen */}
+              <div className="absolute inset-[6px] bg-white rounded-[2.2rem] overflow-hidden">
+                {/* Status Bar */}
+                <div className="absolute top-0 left-0 right-0 h-10 bg-black z-20 flex items-center justify-between px-5 pt-1.5 rounded-t-[2.2rem]">
+                  {/* Left side - Time */}
+                  <div className="text-white text-xs font-semibold">9:41</div>
+
+                  {/* Right side - Signal, WiFi, Battery */}
+                  <div className="flex items-center space-x-1">
+                    {/* Signal bars */}
+                    <div className="flex items-end space-x-0.5">
+                      <div className="w-0.5 h-0.5 bg-white rounded-full"></div>
+                      <div className="w-0.5 h-1 bg-white rounded-full"></div>
+                      <div className="w-0.5 h-1.5 bg-white rounded-full"></div>
+                      <div className="w-0.5 h-2 bg-white rounded-full"></div>
+                    </div>
+
+                    {/* WiFi icon */}
+                    <svg className="w-3 h-3 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.07 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/>
+                    </svg>
+
+                    {/* Battery */}
+                    <div className="flex items-center ml-0.5">
+                      <div className="w-5 h-2.5 border border-white rounded-sm relative">
+                        <div className="absolute inset-0.5 bg-white rounded-sm" style={{ width: '80%' }}></div>
+                      </div>
+                      <div className="w-0.5 h-1 bg-white rounded-r-sm ml-0.5"></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dynamic Island */}
+                <div className="absolute top-1.5 left-1/2 transform -translate-x-1/2 w-24 h-5 bg-black rounded-full z-30"></div>
+
+                {/* Profile Page Content - Starts below status bar */}
+                <div
+                  className="absolute top-10 left-0 right-0 bottom-0 transition-all duration-500 ease-in-out overflow-hidden rounded-b-[2.2rem]"
+                  style={previewStyle()}
+                >
+                  <div className="bg-black bg-opacity-10 min-h-full">
+                    {/* Header Section with Glass Title Card */}
+                    <header className="p-2 text-white text-center">
+                      {/* NEW Glass Title Card */}
+                      <div
+                        className="relative mx-auto p-3 rounded-xl transition-all duration-300"
+                        style={{
+                          ...getGlassCardStyle(),
+                          borderRadius: '12px'
+                        }}
+                      >
+                        {/* Gloss overlay for gloss mode */}
+                        {settings.glass_mode === 'gloss' && (
+                          <div
+                            className="absolute inset-0 rounded-xl pointer-events-none z-0"
+                            style={{
+                              background: 'linear-gradient(125deg, rgba(255,255,255,0.3) 0%, transparent 40%, transparent 100%)',
+                              borderRadius: '12px'
+                            }}
+                          />
+                        )}
+
+                        <div className="relative z-10">
+                          <h1
+                            className="font-bold mb-1 transition-all duration-300"
+                            style={{
+                              ...getDisplayNameStyle(),
+                              fontSize: `calc(1.25rem * ${titleScale})`,
+                              textShadow: '0 1px 4px rgba(0,0,0,0.15)'
+                            }}
+                          >
+                            {displayName}
+                          </h1>
+                          <p
+                            className="text-[10px] opacity-80 leading-tight"
+                            style={{ color: getBioTextColor() }}
+                          >
+                            {truncatedBio.length > 60 ? truncatedBio.substring(0, 60) + '...' : truncatedBio}
+                          </p>
+                        </div>
+                      </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="max-w-full mx-auto px-2 py-2">
+                      {/* Category Dropdown */}
+                      <div className="mb-3">
+                        <div className="relative">
+                          <button
+                            className="w-full p-1.5 rounded-lg shadow-lg flex items-center justify-between border transition-all"
+                            style={{
+                              backgroundColor: settings.card_color,
+                              color: settings.card_text_color,
+                              borderColor: settings.card_color === '#FFFFFF' ? '#E5E7EB' : 'transparent'
+                            }}
+                          >
+                            <div className="flex items-center space-x-1.5">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: settings.card_text_color }}>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                              </svg>
+                              <span className="font-medium text-[10px]">All categories</span>
+                              <span className="text-[10px] opacity-70">(6)</span>
+                            </div>
+                            <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: settings.card_text_color }}>
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Product Grid */}
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {[
+                          { name: 'Premium Headphones', icon: 'M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3' },
+                          { name: 'Smart Watch', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+                          { name: 'Wireless Speaker', icon: 'M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z' },
+                          { name: 'Gaming Monitor', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+                          { name: 'Smartphone', icon: 'M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z' },
+                          { name: 'Wireless Earbuds', icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z' }
+                        ].map((product, i) => (
+                          <div
+                            key={i}
+                            className="product-card rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300"
+                            style={{
+                              background: hexToRgba(settings.card_color, 0.2),
+                              backdropFilter: 'blur(10px)',
+                              border: `1px solid ${hexToRgba(settings.card_color, 0.3)}`
+                            }}
+                          >
+                            <div className="w-full h-12 bg-white/20 flex items-center justify-center">
+                              <svg className="w-3 h-3" fill="none" stroke={settings.card_text_color} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={product.icon} />
+                              </svg>
+                            </div>
+                            <div className="p-1.5">
+                              <h3
+                                className="font-semibold text-[9px] mb-1 truncate"
+                                style={{ color: settings.card_text_color }}
+                              >
+                                {product.name}
+                              </h3>
+                              <button
+                                className="w-full py-0.5 rounded text-white text-[8px] font-medium transition-all duration-200 hover:opacity-90"
+                                style={{ backgroundColor: settings.primary_color }}
+                              >
+                                Open Product
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </main>
+                  </div>
+                </div>
+              </div>
+            </div>
+    </div>
+  )
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-xl font-semibold mb-6 flex items-center text-gray-900">
-          <Store className="w-6 h-6 mr-3 text-blue-600" />
-          Shop Customization
-        </h3>
-
-        {message && (
-          <div className={`mb-6 p-4 rounded-xl border ${
-            message.includes('success')
-              ? 'bg-green-50 text-green-800 border-green-200'
-              : 'bg-red-50 text-red-800 border-red-200'
-          }`}>
-            <div className="flex items-center">
-              <div className={`w-2 h-2 rounded-full mr-3 ${
-                message.includes('success') ? 'bg-green-500' : 'bg-red-500'
-              }`}></div>
-              {message}
+    <div className="min-h-[calc(100vh-200px)]">
+      {/* Mobile Preview Modal (Full Screen) */}
+      {mobilePreviewOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          {/* Modal Content */}
+          <div className="absolute inset-4 flex flex-col items-center justify-center">
+            <div
+              className="relative p-4 rounded-2xl"
+              style={{
+                background: 'radial-gradient(circle at 15% 50%, rgba(76, 29, 149, 0.6), transparent 50%), radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.5), transparent 50%), radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.6), transparent 50%)'
+              }}
+            >
+              {renderPreviewMockup()}
+              {/* View Live Profile Link */}
+              <a
+                href={`/u/${profile?.username}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="absolute bottom-6 right-6 text-white/70 hover:text-white text-xs font-medium flex items-center space-x-1 hover:underline transition-colors bg-black/30 px-2 py-1 rounded-full"
+              >
+                <span>View Live</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating Preview Control Buttons - Mobile Only */}
+      <div className="fixed bottom-6 right-4 z-[60] lg:hidden flex items-center space-x-2">
+        {/* Toggle Preview Visibility (only show when not in full screen) */}
+        {!mobilePreviewOpen && (
+          <button
+            onClick={() => setMiniPreviewVisible(!miniPreviewVisible)}
+            className={`p-3 rounded-full shadow-lg transition-all ${
+              miniPreviewVisible
+                ? 'bg-slate-700 text-white hover:bg-slate-600'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {miniPreviewVisible ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+          </button>
         )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Button & Card Color Card */}
-          <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-all duration-200">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center mr-3">
-                <Palette className="w-5 h-5 text-blue-600" />
-              </div>
-              <h4 className="text-lg font-semibold text-gray-900">Button & Card Colors</h4>
+        {/* Expand/Minimize Toggle */}
+        <button
+          onClick={() => setMobilePreviewOpen(!mobilePreviewOpen)}
+          className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+        >
+          {mobilePreviewOpen ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+        </button>
+      </div>
+
+      {/* Draggable Mini Preview - Mobile Only (when visible and not in full screen) */}
+      {miniPreviewVisible && !mobilePreviewOpen && (
+        <div
+          ref={miniPreviewRef}
+          className="fixed z-40 lg:hidden touch-none"
+          style={{
+            left: `${miniPreviewPosition.x}px`,
+            top: `${miniPreviewPosition.y}px`,
+            width: '70px',
+            height: '151px',
+            cursor: isDragging ? 'grabbing' : 'grab'
+          }}
+          onMouseMove={handleDragMove}
+          onMouseUp={handleDragEnd}
+          onMouseLeave={handleDragEnd}
+          onTouchMove={handleDragMove}
+          onTouchEnd={handleDragEnd}
+        >
+          {/* Drag Handle - positioned above the phone */}
+          <div
+            className="absolute -top-6 left-0 right-0 h-6 flex items-center justify-center cursor-grab active:cursor-grabbing z-10"
+            onMouseDown={handleDragStart}
+            onTouchStart={handleDragStart}
+          >
+            <div className="bg-black/60 rounded-full px-2 py-1">
+              <GripVertical className="w-4 h-4 text-white/80" />
             </div>
-            <p className="text-sm text-gray-600 mb-4">Choose your button and card styling</p>
-            
+          </div>
+
+          {/* Mini iPhone Frame - scaled down version */}
+          <div
+            className="relative w-full h-full overflow-hidden pointer-events-none"
+            style={{
+              transform: 'scale(0.25)',
+              transformOrigin: 'top left',
+              width: '280px',
+              height: '605px'
+            }}
+          >
+            {renderPreviewMockup()}
+          </div>
+        </div>
+      )}
+
+      {/* Main Side-by-Side Layout Container */}
+      <div className="flex flex-col lg:flex-row h-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-2xl overflow-hidden shadow-2xl">
+
+        {/* ===== PREVIEW AREA (Left Side) - Hidden on Mobile ===== */}
+        <div
+          ref={previewContainerRef}
+          className="hidden lg:flex flex-1 justify-center items-center p-8 relative"
+          style={{
+            background: 'radial-gradient(circle at 15% 50%, rgba(76, 29, 149, 0.6), transparent 50%), radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.5), transparent 50%), radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.6), transparent 50%)'
+          }}
+        >
+          {renderPreviewMockup()}
+          {/* View Live Profile Link */}
+          <a
+            href={`/u/${profile?.username}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute bottom-3 right-3 text-white/70 hover:text-white text-xs font-medium flex items-center space-x-1 hover:underline transition-colors bg-black/30 px-2 py-1 rounded-full"
+          >
+            <span>View Live</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
+
+        {/* ===== CONTROLS AREA (Right Side) ===== */}
+        <div className="w-full lg:w-[380px] bg-slate-800 border-t lg:border-t-0 lg:border-l border-white/10 p-6 lg:overflow-y-auto lg:max-h-none">
+
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-white flex items-center">
+              <Store className="w-5 h-5 mr-2 text-blue-400" />
+              Shop Customization
+            </h3>
+            {hasChanges && (
+              <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded-full">
+                Unsaved
+              </span>
+            )}
+          </div>
+
+          {/* Message */}
+          {message && (
+            <div className={`mb-4 p-3 rounded-lg text-sm ${
+              message.includes('success')
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+            }`}>
+              {message}
+            </div>
+          )}
+
+          {/* Section Tabs */}
+          <div className="flex space-x-1 mb-6 bg-slate-700/50 rounded-lg p-1">
+            <button
+              onClick={() => setActiveSection('material')}
+              className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-all ${
+                activeSection === 'material'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-600/50'
+              }`}
+            >
+              <Layers className="w-3 h-3 inline mr-1" />
+              Material
+            </button>
+            <button
+              onClick={() => setActiveSection('title')}
+              className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-all ${
+                activeSection === 'title'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-600/50'
+              }`}
+            >
+              <Type className="w-3 h-3 inline mr-1" />
+              Title
+            </button>
+            <button
+              onClick={() => setActiveSection('background')}
+              className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-all ${
+                activeSection === 'background'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-600/50'
+              }`}
+            >
+              <Image className="w-3 h-3 inline mr-1" />
+              Background
+            </button>
+          </div>
+
+          {/* ===== MATERIAL SECTION ===== */}
+          {activeSection === 'material' && (
             <div className="space-y-6">
-              {/* Button Color Section */}
+              {/* Glass Mode Toggle */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Button Color</label>
+                <h4 className="text-xs uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-white/10">
+                  Glass Material
+                </h4>
+                <div
+                  className="relative bg-slate-700 rounded-lg p-1 cursor-pointer"
+                  onClick={() => setSettings({
+                    ...settings,
+                    glass_mode: settings.glass_mode === 'matte' ? 'gloss' : 'matte'
+                  })}
+                >
+                  <div
+                    className="absolute top-1 h-[calc(100%-8px)] w-[calc(50%-4px)] bg-blue-600 rounded-md transition-transform duration-300 ease-out"
+                    style={{
+                      transform: settings.glass_mode === 'gloss' ? 'translateX(100%)' : 'translateX(0)'
+                    }}
+                  />
+                  <div className="relative flex">
+                    <div className={`flex-1 text-center py-2 text-sm z-10 transition-colors ${
+                      settings.glass_mode === 'matte' ? 'text-white' : 'text-slate-400'
+                    }`}>
+                      Frosted (Matte)
+                    </div>
+                    <div className={`flex-1 text-center py-2 text-sm z-10 transition-colors ${
+                      settings.glass_mode === 'gloss' ? 'text-white' : 'text-slate-400'
+                    }`}>
+                      Crystal (Gloss)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Glass Tint */}
+              <div>
+                <label className="text-xs text-slate-300 mb-2 block">Glass Tint</label>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="color"
+                    value={settings.glass_tint}
+                    onChange={(e) => setSettings({ ...settings, glass_tint: e.target.value })}
+                    className="w-10 h-10 rounded-full border-2 border-slate-600 cursor-pointer bg-transparent"
+                  />
+                  <input
+                    type="text"
+                    value={settings.glass_tint}
+                    onChange={(e) => setSettings({ ...settings, glass_tint: e.target.value })}
+                    className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Button Color */}
+              <div>
+                <h4 className="text-xs uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-white/10">
+                  Button Color
+                </h4>
                 <div className="flex items-center space-x-3">
                   <input
                     type="color"
                     value={settings.primary_color}
                     onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
-                    className="w-16 h-16 rounded-xl border-2 border-gray-300 cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                    className="w-12 h-12 rounded-lg border-2 border-slate-600 cursor-pointer bg-transparent"
                   />
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={settings.primary_color}
-                      onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-mono"
-                      placeholder="#3B82F6"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    value={settings.primary_color}
+                    onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
+                  />
+                </div>
+                {/* Button Preview */}
+                <div className="mt-3 p-3 bg-slate-700/50 rounded-lg">
+                  <button
+                    className="w-full py-2 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
+                    style={{ backgroundColor: settings.primary_color }}
+                  >
+                    Sample Button
+                  </button>
                 </div>
               </div>
 
               {/* Card Style Section */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Card Style</label>
+                <h4 className="text-xs uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-white/10">
+                  Card Style
+                </h4>
                 <div className="grid grid-cols-3 gap-2">
                   <button
-                    onClick={() => setSettings({ 
-                      ...settings, 
+                    onClick={() => setSettings({
+                      ...settings,
                       card_style: 'light',
                       card_color: '#FFFFFF',
                       card_text_color: '#000000'
                     })}
-                    className={`p-3 rounded-lg border-2 transition-all text-center ${
+                    className={`p-2 rounded-lg border transition-all text-center ${
                       settings.card_style === 'light'
-                        ? 'border-blue-500 bg-blue-50 shadow-sm'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-blue-500 bg-blue-500/20'
+                        : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
                     }`}
                   >
-                    <div className="w-full h-6 bg-white border border-gray-200 rounded mb-2 shadow-sm"></div>
-                    <span className="text-xs font-medium">Light</span>
+                    <div className="w-full h-5 bg-white rounded mb-1.5"></div>
+                    <span className="text-xs text-slate-300">Light</span>
                   </button>
                   <button
-                    onClick={() => setSettings({ 
-                      ...settings, 
+                    onClick={() => setSettings({
+                      ...settings,
                       card_style: 'dark',
                       card_color: '#000000',
                       card_text_color: '#f2f2f2'
                     })}
-                    className={`p-3 rounded-lg border-2 transition-all text-center ${
+                    className={`p-2 rounded-lg border transition-all text-center ${
                       settings.card_style === 'dark'
-                        ? 'border-blue-500 bg-blue-50 shadow-sm'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-blue-500 bg-blue-500/20'
+                        : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
                     }`}
                   >
-                    <div className="w-full h-6 bg-black rounded mb-2 shadow-sm"></div>
-                    <span className="text-xs font-medium">Dark</span>
+                    <div className="w-full h-5 bg-black rounded mb-1.5"></div>
+                    <span className="text-xs text-slate-300">Dark</span>
                   </button>
                   <button
                     onClick={() => setSettings({ ...settings, card_style: 'custom' })}
-                    className={`p-3 rounded-lg border-2 transition-all text-center ${
+                    className={`p-2 rounded-lg border transition-all text-center ${
                       settings.card_style === 'custom'
-                        ? 'border-blue-500 bg-blue-50 shadow-sm'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-blue-500 bg-blue-500/20'
+                        : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
                     }`}
                   >
-                    <div className="w-full h-6 rounded mb-2 shadow-sm" style={{ backgroundColor: settings.card_color }}></div>
-                    <span className="text-xs font-medium">Custom</span>
+                    <div className="w-full h-5 rounded mb-1.5" style={{ backgroundColor: settings.card_color }}></div>
+                    <span className="text-xs text-slate-300">Custom</span>
                   </button>
                 </div>
               </div>
 
               {/* Custom Card Colors */}
               {settings.card_style === 'custom' && (
-                <div className="space-y-4">
+                <div className="space-y-3 p-3 bg-slate-700/30 rounded-lg">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Card Background Color</label>
-                    <div className="flex items-center space-x-3">
+                    <label className="text-xs text-slate-300 mb-2 block">Card Background</label>
+                    <div className="flex items-center space-x-2">
                       <input
                         type="color"
                         value={settings.card_color}
                         onChange={(e) => setSettings({ ...settings, card_color: e.target.value })}
-                        className="w-12 h-12 rounded-lg border-2 border-gray-300 cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                        className="w-8 h-8 rounded-lg border border-slate-600 cursor-pointer bg-transparent"
                       />
                       <input
                         type="text"
                         value={settings.card_color}
                         onChange={(e) => setSettings({ ...settings, card_color: e.target.value })}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                        placeholder="#FFFFFF"
+                        className="flex-1 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Card Text Color</label>
-                    <div className="flex items-center space-x-3">
+                    <label className="text-xs text-slate-300 mb-2 block">Card Text</label>
+                    <div className="flex items-center space-x-2">
                       <input
                         type="color"
                         value={settings.card_text_color}
                         onChange={(e) => setSettings({ ...settings, card_text_color: e.target.value })}
-                        className="w-12 h-12 rounded-lg border-2 border-gray-300 cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                        className="w-8 h-8 rounded-lg border border-slate-600 cursor-pointer bg-transparent"
                       />
                       <input
                         type="text"
                         value={settings.card_text_color}
                         onChange={(e) => setSettings({ ...settings, card_text_color: e.target.value })}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                        placeholder="#000000"
+                        className="flex-1 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
                       />
                     </div>
                   </div>
                 </div>
               )}
-              
-              {/* Combined Preview */}
-              <div className="p-4 rounded-lg border border-gray-200 bg-gray-50">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-600">Preview</span>
-                  <button
-                    className="px-4 py-2 rounded-lg text-white text-sm font-medium shadow-sm hover:shadow-md transition-all"
-                    style={{ backgroundColor: settings.primary_color }}
-                  >
-                    Sample Button
-                  </button>
-                </div>
-                <div 
-                  className="p-3 rounded-lg shadow-sm border"
-                  style={{ 
-                    backgroundColor: settings.card_color,
-                    color: settings.card_text_color,
-                    borderColor: settings.card_style === 'light' ? '#E5E7EB' : '#4B5563'
-                  }}
-                >
-                  <h4 className="font-semibold text-sm mb-1">Sample Product Card</h4>
-                  <p className="text-xs opacity-80">This is how your product cards will look</p>
-                </div>
-              </div>
             </div>
-          </div>
+          )}
 
-          {/* Shop Name Style Card */}
-          <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-all duration-200">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center mr-3">
-                <Type className="w-5 h-5 text-purple-600" />
-              </div>
-              <h4 className="text-lg font-semibold text-gray-900">Shop Name Style</h4>
-            </div>
-            <p className="text-sm text-gray-600 mb-4">Customize your shop name appearance</p>
-
-            <div className="space-y-4">
-              {/* Font Selection Dropdown */}
-              <div className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Font Family</label>
-                <button
-                  onClick={() => setFontDropdownOpen(!fontDropdownOpen)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center">
-                    <span 
-                      className="font-medium text-gray-900 mr-2"
-                      style={{ fontFamily: selectedFont?.family }}
-                    >
-                      {selectedFont?.name}
-                    </span>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                      {selectedFont?.category}
-                    </span>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${fontDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {fontDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-80 overflow-y-auto">
-                    {fontCategories.map(category => (
-                      <div key={category} className="p-2">
-                        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-3 py-2">
-                          {category}
-                        </div>
-                        {fontOptions.filter(f => f.category === category).map((font) => (
-                          <button
-                            key={font.id}
-                            onClick={() => {
-                              setSettings({ ...settings, display_name_font: font.id as any })
-                              setFontDropdownOpen(false)
-                            }}
-                            className={`w-full px-3 py-3 text-left hover:bg-gray-50 rounded-lg transition-colors flex items-center justify-between ${
-                              settings.display_name_font === font.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                            }`}
-                          >
-                            <div className="flex-1">
-                              <div 
-                                className="font-medium text-lg p-2 rounded mb-1 transition-all duration-300"
-                                style={{ 
-                                  fontFamily: font.family,
-                                  color: settings.display_name_color,
-                                  backgroundColor: getLuminance(settings.display_name_color) > 128 ? '#1F2937' : '#F3F4F6'
-                                }}
-                              >
-                                {profile?.display_name || 'Your Shop Name'}
-                              </div>
-                              <div className="text-xs text-gray-500">{font.name}</div>
-                            </div>
-                            {settings.display_name_font === font.id && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Text Color */}
+          {/* ===== TITLE SECTION ===== */}
+          {activeSection === 'title' && (
+            <div className="space-y-6">
+              {/* Font Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Text Color</label>
+                <h4 className="text-xs uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-white/10">
+                  Title Font
+                </h4>
+                <div className="relative">
+                  <button
+                    onClick={() => setFontDropdownOpen(!fontDropdownOpen)}
+                    className="w-full px-3 py-3 bg-slate-700 border border-slate-600 rounded-lg text-left flex items-center justify-between hover:bg-slate-600/50 transition-colors"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span
+                        className="text-white font-medium"
+                        style={{ fontFamily: selectedFont?.family }}
+                      >
+                        {selectedFont?.name}
+                      </span>
+                      <span className="text-xs text-slate-400 bg-slate-600 px-1.5 py-0.5 rounded">
+                        {selectedFont?.category}
+                      </span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${fontDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {fontDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-slate-700 rounded-lg shadow-xl border border-slate-600 z-50 max-h-64 overflow-y-auto">
+                      {fontCategories.map(category => (
+                        <div key={category} className="p-1">
+                          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-2 py-1.5">
+                            {category}
+                          </div>
+                          {fontOptions.filter(f => f.category === category).map((font) => (
+                            <button
+                              key={font.id}
+                              onClick={() => {
+                                setSettings({ ...settings, display_name_font: font.id as any })
+                                setFontDropdownOpen(false)
+                              }}
+                              className={`w-full px-2 py-2 text-left hover:bg-slate-600 rounded transition-colors flex items-center justify-between ${
+                                settings.display_name_font === font.id ? 'bg-blue-600/30 border-l-2 border-blue-500' : ''
+                              }`}
+                            >
+                              <span
+                                className="text-white text-sm"
+                                style={{ fontFamily: font.family }}
+                              >
+                                {font.name}
+                              </span>
+                              {settings.display_name_font === font.id && (
+                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Title Color */}
+              <div>
+                <h4 className="text-xs uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-white/10">
+                  Title Color
+                </h4>
                 <div className="flex items-center space-x-3">
                   <input
                     type="color"
                     value={settings.display_name_color}
                     onChange={(e) => setSettings({ ...settings, display_name_color: e.target.value })}
-                    className="w-12 h-12 rounded-lg border-2 border-gray-300 cursor-pointer shadow-sm hover:shadow-md transition-shadow"
+                    className="w-10 h-10 rounded-full border-2 border-slate-600 cursor-pointer bg-transparent"
                   />
                   <input
                     type="text"
                     value={settings.display_name_color}
                     onChange={(e) => setSettings({ ...settings, display_name_color: e.target.value })}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-mono"
-                    placeholder="#FFFFFF"
+                    className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
-              {/* Live Preview */}
-              <div 
-                className="p-4 rounded-lg border border-gray-200 transition-all duration-300"
+              {/* Title Preview */}
+              <div
+                className="p-4 rounded-lg transition-all duration-300"
                 style={{
-                  backgroundColor: getLuminance(settings.display_name_color) > 128 ? '#1F2937' : '#F3F4F6'
+                  backgroundColor: getLuminance(settings.display_name_color) > 128 ? '#1e293b' : '#f1f5f9'
                 }}
               >
-                <div className="text-center">
-                  <h3
-                    className="text-xl font-bold transition-all duration-300"
-                    style={getDisplayNameStyle()}
-                  >
-                    {profile?.display_name || 'Your Shop Name'}
-                  </h3>
-                </div>
+                <h3
+                  className="text-xl font-bold text-center transition-all duration-300"
+                  style={getDisplayNameStyle()}
+                >
+                  {displayName}
+                </h3>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Background Style Card */}
-          <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-all duration-200">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center mr-3">
-                <Image className="w-5 h-5 text-green-600" />
-              </div>
-              <h4 className="text-lg font-semibold text-gray-900">Background Style</h4>
-            </div>
-            <p className="text-sm text-gray-600 mb-4">Set your profile background</p>
-
-            <div className="space-y-4">
+          {/* ===== BACKGROUND SECTION ===== */}
+          {activeSection === 'background' && (
+            <div className="space-y-6">
               {/* Background Type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Background Type</label>
+                <h4 className="text-xs uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-white/10">
+                  Background Type
+                </h4>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => setSettings({ ...settings, background_type: 'image' })}
-                    className={`p-3 rounded-lg border-2 transition-all text-center ${
+                    className={`p-3 rounded-lg border transition-all text-center ${
                       settings.background_type === 'image'
-                        ? 'border-blue-500 bg-blue-50 shadow-sm'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-blue-500 bg-blue-500/20'
+                        : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
                     }`}
                   >
-                    <Image className="w-5 h-5 mx-auto mb-1" />
-                    <span className="text-xs font-medium">Image</span>
+                    <Image className="w-5 h-5 mx-auto mb-1 text-slate-300" />
+                    <span className="text-xs text-slate-300">Image</span>
                   </button>
                   <button
                     onClick={() => setSettings({ ...settings, background_type: 'gradient' })}
-                    className={`p-3 rounded-lg border-2 transition-all text-center ${
+                    className={`p-3 rounded-lg border transition-all text-center ${
                       settings.background_type === 'gradient'
-                        ? 'border-blue-500 bg-blue-50 shadow-sm'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-blue-500 bg-blue-500/20'
+                        : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
                     }`}
                   >
-                    <Layers className="w-5 h-5 mx-auto mb-1" />
-                    <span className="text-xs font-medium">Gradient</span>
+                    <Layers className="w-5 h-5 mx-auto mb-1 text-slate-300" />
+                    <span className="text-xs text-slate-300">Gradient</span>
                   </button>
                   <button
                     onClick={() => setSettings({ ...settings, background_type: 'solid' })}
-                    className={`p-3 rounded-lg border-2 transition-all text-center ${
+                    className={`p-3 rounded-lg border transition-all text-center ${
                       settings.background_type === 'solid'
-                        ? 'border-blue-500 bg-blue-50 shadow-sm'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-blue-500 bg-blue-500/20'
+                        : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
                     }`}
                   >
-                    <Palette className="w-5 h-5 mx-auto mb-1" />
-                    <span className="text-xs font-medium">Solid</span>
+                    <Palette className="w-5 h-5 mx-auto mb-1 text-slate-300" />
+                    <span className="text-xs text-slate-300">Solid</span>
                   </button>
                 </div>
               </div>
@@ -815,8 +1098,7 @@ export default function ProfileCustomization() {
               {/* Background Image Upload */}
               {settings.background_type === 'image' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Upload Background</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-all duration-200">
+                  <div className="border-2 border-dashed border-slate-600 rounded-xl p-4 text-center hover:border-blue-500 hover:bg-blue-500/10 transition-all duration-200">
                     <input
                       type="file"
                       accept="image/*"
@@ -830,529 +1112,181 @@ export default function ProfileCustomization() {
                     />
                     <label
                       htmlFor="background-upload"
-                      className="cursor-pointer flex flex-col items-center space-y-3"
+                      className="cursor-pointer flex flex-col items-center space-y-2"
                     >
                       {uploading ? (
-                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                       ) : (
-                        <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                          <Upload className="w-6 h-6 text-blue-600" />
-                        </div>
+                        <Upload className="w-8 h-8 text-slate-400" />
                       )}
-                      <div>
-                        <span className="text-sm font-medium text-gray-900 block">
-                          {uploading ? 'Uploading...' : 'Upload Background Image'}
-                        </span>
-                        <span className="text-xs text-gray-500 mt-1 block">
-                          PNG, JPG up to 10MB
-                        </span>
-                      </div>
+                      <span className="text-sm text-slate-300">
+                        {uploading ? 'Uploading...' : 'Upload Background'}
+                      </span>
+                      <span className="text-xs text-slate-500">PNG, JPG up to 10MB</span>
                     </label>
                   </div>
 
                   {uploadError && (
-                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <p className="text-sm text-red-600">{uploadError}</p>
+                    <div className="mt-2 p-2 bg-red-500/20 border border-red-500/30 rounded-lg">
+                      <p className="text-xs text-red-400">{uploadError}</p>
                     </div>
                   )}
 
                   {settings.background_image && (
-                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-sm text-green-600 flex items-center">
-                        <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                        Background image uploaded successfully
+                    <div className="mt-2 p-2 bg-green-500/20 border border-green-500/30 rounded-lg">
+                      <p className="text-xs text-green-400 flex items-center">
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        Background uploaded
                       </p>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Gradient Direction */}
+              {/* Gradient Options */}
               {settings.background_type === 'gradient' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-3">Gradient Style</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => setSettings({ ...settings, background_gradient_direction: 'white' })}
-                      className={`p-4 rounded-lg border-2 transition-all ${
-                        settings.background_gradient_direction === 'white'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="w-full h-8 rounded-lg mb-2 shadow-sm" style={{
-                        background: `linear-gradient(to right, ${settings.primary_color}, #FFFFFF)`
-                      }}></div>
-                      <span className="text-xs font-medium">To White</span>
-                    </button>
-                    <button
-                      onClick={() => setSettings({ ...settings, background_gradient_direction: 'black' })}
-                      className={`p-4 rounded-lg border-2 transition-all ${
-                        settings.background_gradient_direction === 'black'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="w-full h-8 rounded-lg mb-2 shadow-sm" style={{
-                        background: `linear-gradient(to right, ${settings.primary_color}, #000000)`
-                      }}></div>
-                      <span className="text-xs font-medium">To Black</span>
-                    </button>
+                <div className="space-y-4">
+                  {/* Gradient Type */}
+                  <div>
+                    <label className="text-xs text-slate-300 mb-2 block">Gradient Type</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => setSettings({ ...settings, background_gradient_type: 'linear' })}
+                        className={`p-2 rounded-lg border transition-all ${
+                          settings.background_gradient_type === 'linear'
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-slate-600 hover:border-slate-500'
+                        }`}
+                      >
+                        <div className="w-full h-5 rounded mb-1" style={{
+                          background: `linear-gradient(to right, ${settings.primary_color}, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'})`
+                        }}></div>
+                        <span className="text-[10px] text-slate-300">Linear</span>
+                      </button>
+                      <button
+                        onClick={() => setSettings({ ...settings, background_gradient_type: 'radial' })}
+                        className={`p-2 rounded-lg border transition-all ${
+                          settings.background_gradient_type === 'radial'
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-slate-600 hover:border-slate-500'
+                        }`}
+                      >
+                        <div className="w-full h-5 rounded mb-1" style={{
+                          background: `radial-gradient(circle at center, ${settings.primary_color} 0%, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 100%)`
+                        }}></div>
+                        <span className="text-[10px] text-slate-300">Radial</span>
+                      </button>
+                      <button
+                        onClick={() => setSettings({ ...settings, background_gradient_type: 'diamond' })}
+                        className={`p-2 rounded-lg border transition-all ${
+                          settings.background_gradient_type === 'diamond'
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-slate-600 hover:border-slate-500'
+                        }`}
+                      >
+                        <div className="w-full h-5 rounded mb-1" style={{
+                          background: `conic-gradient(from 45deg at 50% 50%, ${settings.primary_color} 0deg, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 90deg, ${settings.primary_color} 180deg, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 270deg, ${settings.primary_color} 360deg)`
+                        }}></div>
+                        <span className="text-[10px] text-slate-300">Diamond</span>
+                      </button>
+                      <button
+                        onClick={() => setSettings({ ...settings, background_gradient_type: 'vignette' })}
+                        className={`p-2 rounded-lg border transition-all ${
+                          settings.background_gradient_type === 'vignette'
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-slate-600 hover:border-slate-500'
+                        }`}
+                      >
+                        <div className="w-full h-5 rounded mb-1" style={{
+                          background: `radial-gradient(ellipse at center, ${settings.primary_color} 0%, ${settings.primary_color} 40%, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 100%)`
+                        }}></div>
+                        <span className="text-[10px] text-slate-300">Vignette</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Gradient Direction */}
+                  <div>
+                    <label className="text-xs text-slate-300 mb-2 block">Fade Direction</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => setSettings({ ...settings, background_gradient_direction: 'white' })}
+                        className={`p-2 rounded-lg border transition-all ${
+                          settings.background_gradient_direction === 'white'
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-slate-600 hover:border-slate-500'
+                        }`}
+                      >
+                        <div className="w-full h-5 rounded mb-1 flex items-center justify-center bg-white">
+                          <span className="text-[10px] text-slate-800 font-medium">White</span>
+                        </div>
+                        <span className="text-[10px] text-slate-300">To White</span>
+                      </button>
+                      <button
+                        onClick={() => setSettings({ ...settings, background_gradient_direction: 'black' })}
+                        className={`p-2 rounded-lg border transition-all ${
+                          settings.background_gradient_direction === 'black'
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-slate-600 hover:border-slate-500'
+                        }`}
+                      >
+                        <div className="w-full h-5 rounded mb-1 flex items-center justify-center bg-black border border-slate-600">
+                          <span className="text-[10px] text-white font-medium">Black</span>
+                        </div>
+                        <span className="text-[10px] text-slate-300">To Black</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Save Button */}
-        <div className="mt-8 flex justify-center">
-          <button
-            onClick={handleSave}
-            disabled={loading}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3 font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:transform-none"
-          >
-            {loading ? (
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-            ) : (
-              <Save className="w-5 h-5" />
-            )}
-            <span>{loading ? 'Saving Changes...' : 'Save Customization'}</span>
-          </button>
-        </div>
-
-        {/* Live Preview Section */}
-        <div ref={livePreviewRef} className="mt-8 pt-8 border-t border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-semibold text-gray-900 flex items-center">
-              <Sparkles className="w-5 h-5 mr-2 text-yellow-500" />
-              Live Preview
-            </h4>
-            <a
-              href={`/u/${profile?.username}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center space-x-1 hover:underline"
+          {/* Save Button */}
+          <div className="mt-8 pt-4 border-t border-white/10">
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-medium shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              <span>View Live Profile</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </a>
-          </div>
-          
-          <div className="bg-gray-100 rounded-xl p-8">
-            {/* iPhone 16 Mockup */}
-            <div className="mx-auto relative" style={{ width: '320px', height: '692px' }}>
-              {/* iPhone Frame */}
-              <div className="absolute inset-0 bg-black rounded-[3rem] shadow-2xl">
-                {/* Screen */}
-                <div className="absolute inset-2 bg-white rounded-[2.5rem] overflow-hidden">
-                  {/* Status Bar */}
-                  <div className="absolute top-0 left-0 right-0 h-12 bg-black z-20 flex items-center justify-between px-6 pt-2 rounded-t-[2.5rem]">
-                    {/* Left side - Time */}
-                    <div className="text-white text-sm font-semibold">
-                      9:41
-                    </div>
-                    
-                    {/* Right side - Signal, WiFi, Battery */}
-                    <div className="flex items-center space-x-1">
-                      {/* Signal bars */}
-                      <div className="flex items-end space-x-0.5">
-                        <div className="w-1 h-1 bg-white rounded-full"></div>
-                        <div className="w-1 h-1.5 bg-white rounded-full"></div>
-                        <div className="w-1 h-2 bg-white rounded-full"></div>
-                        <div className="w-1 h-2.5 bg-white rounded-full"></div>
-                      </div>
-                      
-                      {/* WiFi icon */}
-                      <svg className="w-4 h-4 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.07 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/>
-                      </svg>
-                      
-                      {/* Battery */}
-                      <div className="flex items-center ml-1">
-                        <div className="w-6 h-3 border border-white rounded-sm relative">
-                          <div className="absolute inset-0.5 bg-white rounded-sm" style={{ width: '80%' }}></div>
-                        </div>
-                        <div className="w-0.5 h-1.5 bg-white rounded-r-sm ml-0.5"></div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Dynamic Island */}
-                  <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-full z-10"></div>
-                  
-                  {/* Profile Page Content - Starts below status bar */}
-                  <div
-                    className="absolute top-12 left-0 right-0 bottom-0 transition-all duration-500 ease-in-out overflow-hidden rounded-b-[2.5rem]"
-                    style={previewStyle()}
-                  >
-                    <div className="bg-black bg-opacity-10 min-h-full">
-                      {/* Header Section - Matching ProfilePage.tsx exactly */}
-                      <header className="p-2 md:p-4 text-white text-center">
-                        <div className="max-w-full mx-auto p-3 md:p-4 glass-panel rounded-xl">
-                          <div className="flex flex-col items-center space-y-2">
-                            <div className="text-center">
-                              <h1
-                                className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2"
-                                style={getDisplayNameStyle()}
-                              >
-                                {profile?.display_name || 'Your Shop Name'}
-                              </h1>
-                              {truncatedBio && (
-                                <p className="text-xs md:text-sm product-text opacity-80 mt-2 max-w-full mx-auto">
-                                  {truncatedBio}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </header>
-
-                      {/* Main Content */}
-                      <main className="max-w-full mx-auto px-2 py-3">
-                        {/* Category Dropdown - Matching ProfilePage.tsx */}
-                        <div className="mb-4">
-                          <div className="relative">
-                            <button 
-                              className="w-full p-2 rounded-lg shadow-lg focus:outline-none cursor-pointer flex items-center justify-between hover:shadow-xl transition-all border"
-                              style={{
-                                backgroundColor: settings.card_color,
-                                color: settings.card_text_color,
-                                borderColor: settings.card_color === '#FFFFFF' ? '#E5E7EB' : settings.card_color
-                              }}
-                            >
-                              <div className="flex items-center space-x-2">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: settings.card_text_color }}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                                </svg>
-                                <span className="font-medium text-xs">All categories</span>
-                                <span className="text-xs opacity-70">(6)</span>
-                              </div>
-                              <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: settings.card_text_color }}>
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                        {/* Product Grid - Matching ProfilePage.tsx grid */}
-                        <div className="grid grid-cols-2 gap-2">
-                          {/* Product Card 1 */}
-                          <div className="product-card rounded-lg overflow-hidden glass-panel cursor-pointer hover:scale-105 transition-transform duration-300">
-                            <div className="w-full h-16 bg-white/20 flex items-center justify-center">
-                              <svg className="w-4 h-4 product-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                              </svg>
-                            </div>
-                            <div className="p-2">
-                              <h3 className="product-text font-semibold text-xs mb-1">
-                                Premium Headphones
-                              </h3>
-                              <button
-                                className="w-full py-1 rounded-lg font-medium transition-all duration-200 hover:opacity-90 text-white text-xs"
-                                style={{ backgroundColor: settings.primary_color }}
-                              >
-                                Open Product
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Product Card 2 */}
-                          <div className="product-card rounded-lg overflow-hidden glass-panel cursor-pointer hover:scale-105 transition-transform duration-300">
-                            <div className="w-full h-16 bg-white/20 flex items-center justify-center">
-                              <svg className="w-4 h-4 product-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                            </div>
-                            <div className="p-2">
-                              <h3 className="product-text font-semibold text-xs mb-1">
-                                Smart Watch
-                              </h3>
-                              <button
-                                className="w-full py-1 rounded-lg font-medium transition-all duration-200 hover:opacity-90 text-white text-xs"
-                                style={{ backgroundColor: settings.primary_color }}
-                              >
-                                Open Product
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Product Card 3 */}
-                          <div className="product-card rounded-lg overflow-hidden glass-panel cursor-pointer hover:scale-105 transition-transform duration-300">
-                            <div className="w-full h-16 bg-white/20 flex items-center justify-center">
-                              <svg className="w-4 h-4 product-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                              </svg>
-                            </div>
-                            <div className="p-2">
-                              <h3 className="product-text font-semibold text-xs mb-1">
-                                Wireless Speaker
-                              </h3>
-                              <button
-                                className="w-full py-1 rounded-lg font-medium transition-all duration-200 hover:opacity-90 text-white text-xs"
-                                style={{ backgroundColor: settings.primary_color }}
-                              >
-                                Open Product
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Product Card 4 */}
-                          <div className="product-card rounded-lg overflow-hidden glass-panel cursor-pointer hover:scale-105 transition-transform duration-300">
-                            <div className="w-full h-16 bg-white/20 flex items-center justify-center">
-                              <svg className="w-4 h-4 product-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                            <div className="p-2">
-                              <h3 className="product-text font-semibold text-xs mb-1">
-                                Gaming Monitor
-                              </h3>
-                              <button
-                                className="w-full py-1 rounded-lg font-medium transition-all duration-200 hover:opacity-90 text-white text-xs"
-                                style={{ backgroundColor: settings.primary_color }}
-                              >
-                                Open Product
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Product Card 5 */}
-                          <div className="product-card rounded-lg overflow-hidden glass-panel cursor-pointer hover:scale-105 transition-transform duration-300">
-                            <div className="w-full h-16 bg-white/20 flex items-center justify-center">
-                              <svg className="w-4 h-4 product-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                            <div className="p-2">
-                              <h3 className="product-text font-semibold text-xs mb-1">
-                                Smartphone
-                              </h3>
-                              <button
-                                className="w-full py-1 rounded-lg font-medium transition-all duration-200 hover:opacity-90 text-white text-xs"
-                                style={{ backgroundColor: settings.primary_color }}
-                              >
-                                Open Product
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Product Card 6 */}
-                          <div className="product-card rounded-lg overflow-hidden glass-panel cursor-pointer hover:scale-105 transition-transform duration-300">
-                            <div className="w-full h-16 bg-white/20 flex items-center justify-center">
-                              <svg className="w-4 h-4 product-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 110 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 110-2h4zM9 6v10h6V6H9z" />
-                              </svg>
-                            </div>
-                            <div className="p-2">
-                              <h3 className="product-text font-semibold text-xs mb-1">
-                                Wireless Earbuds
-                              </h3>
-                              <button
-                                className="w-full py-1 rounded-lg font-medium transition-all duration-200 hover:opacity-90 text-white text-xs"
-                                style={{ backgroundColor: settings.primary_color }}
-                              >
-                                Open Product
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </main>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+              {loading ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              ) : (
+                <Save className="w-5 h-5" />
+              )}
+              <span>{loading ? 'Saving...' : 'Save Customization'}</span>
+            </button>
           </div>
         </div>
       </div>
 
       {/* Floating Action Buttons */}
       {hasChanges && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-white rounded-full shadow-2xl border border-gray-200 p-2 flex items-center space-x-2">
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 lg:hidden">
+          <div className="bg-slate-800 rounded-full shadow-2xl border border-slate-700 p-2 flex items-center space-x-2">
             <button
               onClick={handleCancel}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-all duration-200"
+              className="flex items-center space-x-2 px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-full transition-all duration-200"
             >
               <X className="w-4 h-4" />
               <span className="text-sm font-medium">Cancel</span>
             </button>
-            <div className="w-px h-6 bg-gray-300"></div>
+            <div className="w-px h-6 bg-slate-600"></div>
             <button
               onClick={handleSave}
               disabled={loading}
-              className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 transition-all duration-200 transform hover:scale-105 disabled:transform-none"
+              className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 transition-all duration-200"
             >
               {loading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
               ) : (
                 <Save className="w-4 h-4" />
               )}
-              <span className="text-sm font-medium">{loading ? 'Saving...' : 'Save Changes'}</span>
+              <span className="text-sm font-medium">{loading ? 'Saving...' : 'Save'}</span>
             </button>
           </div>
         </div>
       )}
-
-      {/* Floating Mini Preview - 50% smaller with large minimize button */}
-      {showFloatingPreview && !previewHidden && (
-        <div className="fixed top-20 right-6 z-40 bg-white rounded-xl shadow-2xl border border-gray-200 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <Eye className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-gray-900">Live Preview</span>
-            </div>
-            <button
-              onClick={() => setPreviewHidden(true)}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 rounded-lg p-2 transition-all duration-200 flex items-center space-x-2 text-sm font-medium"
-              title="Minimize preview"
-            >
-              <span>Minimize</span>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-              </svg>
-            </button>
-          </div>
-          
-          {/* Mini iPhone Preview - 50% smaller */}
-          <div className="relative" style={{ width: '80px', height: '173px' }}>
-            {/* iPhone Frame */}
-            <div className="absolute inset-0 bg-black rounded-[0.75rem] shadow-lg">
-              {/* Screen */}
-              <div className="absolute inset-0.5 bg-white rounded-[0.625rem] overflow-hidden">
-                {/* Status Bar */}
-                <div className="absolute top-0 left-0 right-0 h-3 bg-black z-20 flex items-center justify-between px-1.5 pt-0.5 rounded-t-[0.625rem]">
-                  <div className="text-white text-[6px] font-semibold">9:41</div>
-                  <div className="flex items-center space-x-0.5">
-                    <div className="flex items-end space-x-0.5">
-                      <div className="w-0.5 h-0.5 bg-white rounded-full"></div>
-                      <div className="w-0.5 h-0.5 bg-white rounded-full"></div>
-                      <div className="w-0.5 h-1 bg-white rounded-full"></div>
-                      <div className="w-0.5 h-1 bg-white rounded-full"></div>
-                    </div>
-                    <div className="flex items-center ml-0.5">
-                      <div className="w-1.5 h-0.5 border border-white rounded-sm relative">
-                        <div className="absolute inset-0.5 bg-white rounded-sm" style={{ width: '80%' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dynamic Island */}
-                <div className="absolute top-0.5 left-1/2 transform -translate-x-1/2 w-8 h-1.5 bg-black rounded-full z-10"></div>
-                
-                {/* Content */}
-                <div
-                  className="absolute top-3 left-0 right-0 bottom-0 transition-all duration-300 overflow-hidden rounded-b-[0.625rem]"
-                  style={previewStyle()}
-                >
-                  <div className="bg-black bg-opacity-10 min-h-full">
-                    <header className="p-0.5 text-white text-center">
-                      <div className="max-w-full mx-auto p-0.5 glass-panel rounded-sm">
-                        <h1
-                          className="text-[6px] font-bold mb-0.5"
-                          style={getDisplayNameStyle()}
-                        >
-                          {profile?.display_name || 'Shop'}
-                        </h1>
-                        <p className="text-[4px] product-text opacity-80 truncate">
-                          {profile?.bio || 'Description'}
-                        </p>
-                      </div>
-                    </header>
-
-                    <main className="px-0.5 py-0.5">
-                      <div className="mb-1">
-                        <button 
-                          className="w-full p-0.5 rounded text-[4px] flex items-center justify-between"
-                          style={{
-                            backgroundColor: settings.card_color,
-                            color: settings.card_text_color
-                          }}
-                        >
-                          <span>All (6)</span>
-                          <svg className="h-1 w-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-0.5">
-                        {[1, 2, 3, 4].map((i) => (
-                          <div key={i} className="glass-panel rounded p-0.5">
-                            <div className="w-full h-4 bg-white/20 rounded mb-0.5"></div>
-                            <div className="text-[4px] product-text font-medium mb-0.5 truncate">Product {i}</div>
-                            <button
-                              className="w-full py-0.5 rounded text-white text-[4px]"
-                              style={{ backgroundColor: settings.primary_color }}
-                            >
-                              Open
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </main>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Hidden Preview Toggle Button - Large and prominent */}
-      {showFloatingPreview && previewHidden && (
-        <div className="fixed top-20 right-6 z-40">
-          <button
-            onClick={() => setPreviewHidden(false)}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl p-3 shadow-2xl hover:shadow-3xl transition-all duration-200 flex items-center space-x-2 text-sm font-medium transform hover:scale-105"
-            title="Show preview"
-          >
-            <Eye className="w-4 h-4" />
-            <span>Show Preview</span>
-          </button>
-        </div>
-      )}
-
-      <style>{`
-        .glass-panel {
-          background: ${hexToRgba(settings.card_color, 0.2)};
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-          border: 1px solid ${hexToRgba(settings.card_color, 0.3)};
-          box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        }
-
-        .product-text {
-          color: ${settings.card_text_color};
-          transition: color 0.5s ease-in-out;
-        }
-
-        @keyframes slideInUp {
-          from {
-            opacity: 0;
-            transform: translateY(50px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .product-card {
-          animation: slideInUp 0.5s ease-out forwards;
-          opacity: 0;
-        }
-
-        .product-card:nth-child(1) { animation-delay: 0.1s; }
-        .product-card:nth-child(2) { animation-delay: 0.2s; }
-        .product-card:nth-child(3) { animation-delay: 0.3s; }
-        .product-card:nth-child(4) { animation-delay: 0.4s; }
-        .product-card:nth-child(5) { animation-delay: 0.5s; }
-        .product-card:nth-child(6) { animation-delay: 0.6s; }
-      `}</style>
     </div>
   )
 }

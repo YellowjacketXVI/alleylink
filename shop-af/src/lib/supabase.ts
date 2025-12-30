@@ -21,11 +21,14 @@ export interface Profile {
   background_type?: 'image' | 'gradient' | 'solid'
   background_image?: string
   background_gradient_direction?: 'white' | 'black'
+  background_gradient_type?: 'linear' | 'radial' | 'diamond' | 'vignette'
   display_name_color?: string
   display_name_font?: string // Support all font options dynamically
   card_style?: 'light' | 'dark' | 'custom'
   card_color?: string
   card_text_color?: string
+  glass_mode?: 'matte' | 'gloss'
+  glass_tint?: string
   subscription_status: 'free' | 'active' | 'inactive'
   plan_type: 'free' | 'basic' | 'pro' | 'unlimited'
   stripe_customer_id?: string

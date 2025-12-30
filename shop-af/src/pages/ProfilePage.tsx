@@ -5,131 +5,118 @@ import { useProducts } from '../hooks/useProducts'
 import { ExternalLink, ArrowLeft, User, MapPin, Calendar, Tag, ChevronDown, Filter, Star } from 'lucide-react'
 import Navbar from '../components/Navbar'
 
-// Helper function to get display name style - supports all fonts dynamically
+// Comprehensive font mapping that supports all possible fonts
+const fontMap: Record<string, string> = {
+  // Modern Sans-Serif
+  'inter': 'Inter, sans-serif',
+  'poppins': 'Poppins, sans-serif',
+  'montserrat': 'Montserrat, sans-serif',
+  'roboto': 'Roboto, sans-serif',
+  'opensans': 'Open Sans, sans-serif',
+  'lato': 'Lato, sans-serif',
+  'nunito': 'Nunito, sans-serif',
+  'sourcesans': 'Source Sans Pro, sans-serif',
+  'worksans': 'Work Sans, sans-serif',
+  'firasans': 'Fira Sans, sans-serif',
+  'dmsans': 'DM Sans, sans-serif',
+  'rubik': 'Rubik, sans-serif',
+
+  // Classic Serif
+  'merriweather': 'Merriweather, serif',
+  'playfair': 'Playfair Display, serif',
+  'crimson': 'Crimson Text, serif',
+  'lora': 'Lora, serif',
+  'cormorant': 'Cormorant Garamond, serif',
+  'ebgaramond': 'EB Garamond, serif',
+  'librebaskerville': 'Libre Baskerville, serif',
+  'oldstandard': 'Old Standard TT, serif',
+  'spectral': 'Spectral, serif',
+  'vollkorn': 'Vollkorn, serif',
+
+  // Display & Stylized
+  'orbitron': 'Orbitron, sans-serif',
+  'raleway': 'Raleway, sans-serif',
+  'oswald': 'Oswald, sans-serif',
+  'bebas': 'Bebas Neue, sans-serif',
+  'anton': 'Anton, sans-serif',
+  'bangers': 'Bangers, cursive',
+  'fredoka': 'Fredoka One, cursive',
+  'righteous': 'Righteous, cursive',
+  'comfortaa': 'Comfortaa, cursive',
+  'quicksand': 'Quicksand, sans-serif',
+  'archivo': 'Archivo Black, sans-serif',
+  'bungee': 'Bungee, cursive',
+  'creepster': 'Creepster, cursive',
+  'monoton': 'Monoton, cursive',
+  'pressstart': 'Press Start 2P, cursive',
+
+  // Script & Cursive
+  'dancing': 'Dancing Script, cursive',
+  'pacifico': 'Pacifico, cursive',
+  'caveat': 'Caveat, cursive',
+  'greatvibes': 'Great Vibes, cursive',
+  'sacramento': 'Sacramento, cursive',
+  'allura': 'Allura, cursive',
+  'satisfy': 'Satisfy, cursive',
+  'kaushan': 'Kaushan Script, cursive',
+  'amatic': 'Amatic SC, cursive',
+  'shadows': 'Shadows Into Light, cursive',
+  'indie': 'Indie Flower, cursive',
+  'permanent': 'Permanent Marker, cursive',
+  'cookie': 'Cookie, cursive',
+  'tangerine': 'Tangerine, cursive',
+  'lobster': 'Lobster, cursive',
+  'courgette': 'Courgette, cursive',
+
+  // Monospace & Tech
+  'firacode': 'Fira Code, monospace',
+  'sourcecodepro': 'Source Code Pro, monospace',
+  'robotomono': 'Roboto Mono, monospace',
+  'spacemono': 'Space Mono, monospace',
+  'jetbrains': 'JetBrains Mono, monospace',
+  'ubuntumono': 'Ubuntu Mono, monospace',
+
+  // Unique & Artistic
+  'nosifer': 'Nosifer, cursive',
+  'eater': 'Eater, cursive',
+  'chela': 'Chela One, cursive',
+  'fascinate': 'Fascinate, cursive',
+  'griffy': 'Griffy, cursive',
+  'henny': 'Henny Penny, cursive',
+  'jolly': 'Jolly Lodger, cursive',
+  'kalam': 'Kalam, cursive',
+  'lacquer': 'Lacquer, cursive',
+  'luckiest': 'Luckiest Guy, cursive',
+  'mystery': 'Mystery Quest, cursive',
+  'pirata': 'Pirata One, cursive',
+  'rye': 'Rye, cursive',
+  'smokum': 'Smokum, cursive',
+  'special': 'Special Elite, cursive',
+  'trade': 'Trade Winds, cursive',
+  'vampiro': 'Vampiro One, cursive',
+  'papyrus': 'Papyrus, fantasy',
+
+  // Elegant & Luxury
+  'cinzel': 'Cinzel, serif',
+  'cinzeldecorative': 'Cinzel Decorative, cursive',
+  'forum': 'Forum, cursive',
+  'marcellus': 'Marcellus, serif',
+  'trajan': 'Trajan Pro, serif',
+  'yeseva': 'Yeseva One, cursive',
+  'abril': 'Abril Fatface, cursive',
+  'cardo': 'Cardo, serif',
+  'sorts': 'Sorts Mill Goudy, serif',
+  'unna': 'Unna, serif',
+
+  // System Fonts
+  'sansserif': 'sans-serif'
+}
+
+// Helper function to get display name style - uses database values directly
 const getDisplayNameStyle = (profile: Profile) => {
-  // Comprehensive font mapping that supports all possible fonts
-  const fontMap: Record<string, string> = {
-    // Modern Sans-Serif
-    'inter': 'Inter, sans-serif',
-    'poppins': 'Poppins, sans-serif',
-    'montserrat': 'Montserrat, sans-serif',
-    'roboto': 'Roboto, sans-serif',
-    'opensans': 'Open Sans, sans-serif',
-    'lato': 'Lato, sans-serif',
-    'nunito': 'Nunito, sans-serif',
-    'sourcesans': 'Source Sans Pro, sans-serif',
-    'worksans': 'Work Sans, sans-serif',
-    'firasans': 'Fira Sans, sans-serif',
-    'dmsans': 'DM Sans, sans-serif',
-    'rubik': 'Rubik, sans-serif',
-
-    // Classic Serif
-    'merriweather': 'Merriweather, serif',
-    'playfair': 'Playfair Display, serif',
-    'crimson': 'Crimson Text, serif',
-    'lora': 'Lora, serif',
-    'cormorant': 'Cormorant Garamond, serif',
-    'ebgaramond': 'EB Garamond, serif',
-    'librebaskerville': 'Libre Baskerville, serif',
-    'oldstandard': 'Old Standard TT, serif',
-    'spectral': 'Spectral, serif',
-    'vollkorn': 'Vollkorn, serif',
-
-    // Display & Stylized
-    'orbitron': 'Orbitron, sans-serif',
-    'raleway': 'Raleway, sans-serif',
-    'oswald': 'Oswald, sans-serif',
-    'bebas': 'Bebas Neue, sans-serif',
-    'anton': 'Anton, sans-serif',
-    'bangers': 'Bangers, cursive',
-    'fredoka': 'Fredoka One, cursive',
-    'righteous': 'Righteous, cursive',
-    'comfortaa': 'Comfortaa, cursive',
-    'quicksand': 'Quicksand, sans-serif',
-    'archivo': 'Archivo Black, sans-serif',
-    'bungee': 'Bungee, cursive',
-    'creepster': 'Creepster, cursive',
-    'monoton': 'Monoton, cursive',
-    'pressstart': 'Press Start 2P, cursive',
-
-    // Script & Cursive
-    'dancing': 'Dancing Script, cursive',
-    'pacifico': 'Pacifico, cursive',
-    'caveat': 'Caveat, cursive',
-    'greatvibes': 'Great Vibes, cursive',
-    'sacramento': 'Sacramento, cursive',
-    'allura': 'Allura, cursive',
-    'satisfy': 'Satisfy, cursive',
-    'kaushan': 'Kaushan Script, cursive',
-    'amatic': 'Amatic SC, cursive',
-    'shadows': 'Shadows Into Light, cursive',
-    'indie': 'Indie Flower, cursive',
-    'permanent': 'Permanent Marker, cursive',
-    'cookie': 'Cookie, cursive',
-    'tangerine': 'Tangerine, cursive',
-    'lobster': 'Lobster, cursive',
-    'courgette': 'Courgette, cursive',
-
-    // Monospace & Tech
-    'firacode': 'Fira Code, monospace',
-    'sourcecodepro': 'Source Code Pro, monospace',
-    'robotomono': 'Roboto Mono, monospace',
-    'spacemono': 'Space Mono, monospace',
-    'jetbrains': 'JetBrains Mono, monospace',
-    'ubuntumono': 'Ubuntu Mono, monospace',
-
-    // Unique & Artistic
-    'nosifer': 'Nosifer, cursive',
-    'eater': 'Eater, cursive',
-    'chela': 'Chela One, cursive',
-    'fascinate': 'Fascinate, cursive',
-    'griffy': 'Griffy, cursive',
-    'henny': 'Henny Penny, cursive',
-    'jolly': 'Jolly Lodger, cursive',
-    'kalam': 'Kalam, cursive',
-    'lacquer': 'Lacquer, cursive',
-    'luckiest': 'Luckiest Guy, cursive',
-    'mystery': 'Mystery Quest, cursive',
-    'pirata': 'Pirata One, cursive',
-    'rye': 'Rye, cursive',
-    'smokum': 'Smokum, cursive',
-    'special': 'Special Elite, cursive',
-    'trade': 'Trade Winds, cursive',
-    'vampiro': 'Vampiro One, cursive',
-    'papyrus': 'Papyrus, fantasy',
-
-    // Elegant & Luxury
-    'cinzel': 'Cinzel, serif',
-    'cinzeldecorative': 'Cinzel Decorative, cursive',
-    'forum': 'Forum, cursive',
-    'marcellus': 'Marcellus, serif',
-    'trajan': 'Trajan Pro, serif',
-    'yeseva': 'Yeseva One, cursive',
-    'abril': 'Abril Fatface, cursive',
-    'cardo': 'Cardo, serif',
-    'sorts': 'Sorts Mill Goudy, serif',
-    'unna': 'Unna, serif',
-
-    // System Fonts
-    'sansserif': 'sans-serif'
-  }
-
-  // Get the actual font to use - check localStorage for original font selection first
-  let fontToUse = profile.display_name_font || 'inter'
-  let colorToUse = profile.display_name_color || '#FFFFFF'
-
-  try {
-    const storedFontStyling = localStorage.getItem(`fontStyling_${profile.user_id}`)
-    if (storedFontStyling) {
-      const parsed = JSON.parse(storedFontStyling)
-      console.log('ProfilePage - Found font styling in localStorage:', parsed)
-      // Use the original font selection, not the mapped one
-      fontToUse = parsed.original_font || fontToUse
-      colorToUse = parsed.display_name_color || colorToUse
-    }
-  } catch (error) {
-    console.error('Error reading font styling from localStorage:', error)
-  }
+  // Get font and color directly from database (no localStorage needed now)
+  const fontToUse = profile.display_name_font || 'inter'
+  const colorToUse = profile.display_name_color || '#FFFFFF'
 
   // Get font family from map, fallback to Inter if not found
   const fontFamily = fontMap[fontToUse] || 'Inter, sans-serif'
@@ -479,31 +466,58 @@ const fetchProfile = async () => {
   const isDarkBackground = getLuminance(primaryColor) < 128
   const textColor = isDarkBackground ? '#FFFFFF' : '#000000'
 
-  // Get card styling based on profile settings
-  // Since card styling fields don't exist in database yet, check localStorage
-  const getCardStyling = () => {
-    try {
-      const storedStyling = localStorage.getItem(`cardStyling_${profile.user_id}`)
-      if (storedStyling) {
-        const parsed = JSON.parse(storedStyling)
-        console.log('ProfilePage - Found card styling in localStorage:', parsed)
-        return {
-          cardColor: parsed.card_color || '#FFFFFF',
-          cardTextColor: parsed.card_text_color || '#000000'
-        }
-      }
-    } catch (error) {
-      console.error('Error reading card styling from localStorage:', error)
-    }
-    
-    // Fallback to database values or defaults
-    return {
-      cardColor: profile.card_color || '#FFFFFF',
-      cardTextColor: profile.card_text_color || '#000000'
-    }
+  // Get card styling from database (with defaults)
+  const cardColor = profile.card_color || '#FFFFFF'
+  const cardTextColor = profile.card_text_color || '#000000'
+
+  // Get glass card styling from database
+  const glassMode = profile.glass_mode || 'matte'
+  const glassTintColor = profile.glass_tint || '#FFFFFF'
+  const captionFont = 'inter' // Default caption font
+  // Caption color now uses card_text_color for consistency with preview
+  const captionColor = cardTextColor
+
+  // Convert hex to RGB string for CSS variables
+  const hexToRgb = (hex: string) => {
+    const cleanHex = hex.replace('#', '')
+    const r = parseInt(cleanHex.substring(0, 2), 16)
+    const g = parseInt(cleanHex.substring(2, 4), 16)
+    const b = parseInt(cleanHex.substring(4, 6), 16)
+    return `${r}, ${g}, ${b}`
   }
 
-  const { cardColor, cardTextColor } = getCardStyling()
+  // Adaptive text scaling based on text length
+  const calculateTitleScale = (textLength: number) => {
+    if (textLength < 10) return 1
+    if (textLength < 20) return 0.8
+    if (textLength < 30) return 0.6
+    if (textLength < 50) return 0.45
+    return 0.35
+  }
+
+  const calculateCaptionScale = (textLength: number) => {
+    if (textLength < 50) return 1
+    if (textLength < 100) return 0.9
+    if (textLength < 200) return 0.8
+    return 0.75
+  }
+
+  const titleScale = calculateTitleScale(profile.display_name?.length || 0)
+  const captionScale = calculateCaptionScale(profile.bio?.length || 0)
+
+  // Get caption font family
+  const getCaptionFontFamily = () => {
+    const fontMap: Record<string, string> = {
+      'inter': 'Inter, sans-serif',
+      'lato': 'Lato, sans-serif',
+      'montserrat': 'Montserrat, sans-serif',
+      'cormorant': 'Cormorant Garamond, serif',
+      'spacemono': 'Space Mono, monospace'
+    }
+    return fontMap[captionFont] || 'Inter, sans-serif'
+  }
+
+  const glassColorRgb = hexToRgb(glassTintColor)
   
   // Debug logging for card styling
   console.log('ProfilePage - Card styling:', {
@@ -527,6 +541,38 @@ const fetchProfile = async () => {
   const backgroundType = profile.background_type || 'image'
   const backgroundGradientDirection = profile.background_gradient_direction || 'white'
 
+  // Get gradient type directly from database
+  const gradientType = profile.background_gradient_type || 'linear'
+
+  // Generate gradient based on type and direction
+  const getGradientStyle = () => {
+    const targetColor = backgroundGradientDirection === 'white' ? '#FFFFFF' : '#000000'
+
+    switch (gradientType) {
+      case 'radial':
+        return {
+          background: `radial-gradient(circle at center, ${primaryColor} 0%, ${targetColor} 100%)`,
+          backgroundAttachment: 'fixed'
+        }
+      case 'diamond':
+        return {
+          background: `conic-gradient(from 45deg at 50% 50%, ${primaryColor} 0deg, ${targetColor} 90deg, ${primaryColor} 180deg, ${targetColor} 270deg, ${primaryColor} 360deg)`,
+          backgroundAttachment: 'fixed'
+        }
+      case 'vignette':
+        return {
+          background: `radial-gradient(ellipse at center, ${primaryColor} 0%, ${primaryColor} 40%, ${targetColor} 100%)`,
+          backgroundAttachment: 'fixed'
+        }
+      case 'linear':
+      default:
+        return {
+          background: `linear-gradient(to right, ${primaryColor}, ${targetColor})`,
+          backgroundAttachment: 'fixed'
+        }
+    }
+  }
+
   const getBackgroundStyle = () => {
     if (backgroundType === 'image') {
       return {
@@ -537,11 +583,7 @@ const fetchProfile = async () => {
         backgroundAttachment: 'fixed' // Make background static
       }
     } else if (backgroundType === 'gradient') {
-      const targetColor = backgroundGradientDirection === 'white' ? '#FFFFFF' : '#000000'
-      return {
-        backgroundImage: `linear-gradient(to right, ${primaryColor}, ${targetColor})`,
-        backgroundAttachment: 'fixed' // Make background static
-      }
+      return getGradientStyle()
     } else {
       return {
         backgroundColor: primaryColor
@@ -558,6 +600,97 @@ const fetchProfile = async () => {
           -webkit-backdrop-filter: blur(10px);
           border: 1px solid ${hexToRgba(cardColor, 0.3)};
           box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        /* Glass Title Card - Matte Mode (Default) */
+        .glass-title-card {
+          position: relative;
+          border-radius: 24px;
+          padding: 60px 40px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          text-align: center;
+          transition: all 0.3s ease;
+          background: rgba(${glassColorRgb}, 0.15);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          border: 1px solid rgba(${glassColorRgb}, 0.3);
+          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        /* Glass Title Card - Gloss Mode */
+        .glass-title-card.gloss-mode {
+          background: linear-gradient(
+            135deg,
+            rgba(${glassColorRgb}, 0.4) 0%,
+            rgba(${glassColorRgb}, 0.05) 50%,
+            rgba(${glassColorRgb}, 0) 100%
+          );
+          box-shadow:
+            8px 8px 20px 0 rgba(0, 0, 0, 0.3),
+            inset 1px 1px 0 rgba(255, 255, 255, 0.6),
+            inset -1px -1px 0 rgba(0, 0, 0, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(6px);
+          -webkit-backdrop-filter: blur(6px);
+        }
+
+        .glass-title-card.gloss-mode::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0; bottom: 0;
+          border-radius: 24px;
+          background: linear-gradient(
+            125deg,
+            rgba(255,255,255,0.4) 0%,
+            transparent 40%,
+            transparent 100%
+          );
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .glass-title-card .card-content {
+          position: relative;
+          z-index: 2;
+          width: 100%;
+        }
+
+        .glass-title-card .card-title {
+          font-size: calc(6rem * ${titleScale});
+          line-height: 1;
+          margin-bottom: 16px;
+          transition: font-size 0.3s ease;
+          text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          word-wrap: break-word;
+        }
+
+        .glass-title-card .card-caption {
+          font-family: ${getCaptionFontFamily()};
+          font-size: calc(1.2rem * ${captionScale});
+          color: ${captionColor};
+          opacity: 0.8;
+          letter-spacing: 0.02em;
+          max-width: 80%;
+          margin: 0 auto;
+          line-height: 1.5;
+          transition: font-size 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+          .glass-title-card {
+            padding: 40px 24px;
+            border-radius: 16px;
+          }
+          .glass-title-card .card-title {
+            font-size: calc(3.5rem * ${titleScale});
+          }
+          .glass-title-card .card-caption {
+            font-size: calc(1rem * ${captionScale});
+            max-width: 95%;
+          }
         }
 
         .product-text {
@@ -598,23 +731,21 @@ const fetchProfile = async () => {
         <div className="bg-black bg-opacity-10 min-h-screen">
           <Navbar transparent />
 
-          {/* Simplified Header Section */}
+          {/* Glass Title Card Header */}
           <header className="p-4 md:p-8 text-white text-center">
-            <div className="max-w-4xl mx-auto p-6 md:p-8 glass-panel rounded-xl">
-              <div className="flex flex-col items-center space-y-4">
-                <div className="text-center">
-                  <h1
-                    className="text-6xl md:text-7xl lg:text-8xl font-bold mb-4"
-                    style={getDisplayNameStyle(profile)}
-                  >
-                    {profile.display_name}
-                  </h1>
-                  {profile.bio && (
-                    <p className="text-sm md:text-base product-text opacity-80 mt-3 max-w-2xl mx-auto">
-                      {profile.bio}
-                    </p>
-                  )}
-                </div>
+            <div className={`max-w-4xl mx-auto glass-title-card ${glassMode === 'gloss' ? 'gloss-mode' : ''}`}>
+              <div className="card-content">
+                <h1
+                  className="card-title font-bold"
+                  style={getDisplayNameStyle(profile)}
+                >
+                  {profile.display_name}
+                </h1>
+                {profile.bio && (
+                  <p className="card-caption">
+                    {profile.bio}
+                  </p>
+                )}
               </div>
             </div>
           </header>
