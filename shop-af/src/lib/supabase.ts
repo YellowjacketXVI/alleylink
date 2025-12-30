@@ -1,11 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Production configuration with fallback values
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://eyafgfuxvarbpkhjkuxq.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV5YWZnZnV4dmFyYnBraGprdXhxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxNTI5NzksImV4cCI6MjA2ODcyODk3OX0.3TcVpxX3XeuL_WtMNsitvKFP1-DI3gFzdZkTYJ7BSQQ'
+// Environment variables - must be set in .env file
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables. Please check your .env file.')
+  throw new Error('Missing Supabase environment variables. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
@@ -113,8 +113,8 @@ export const PLAN_LIMITS = {
   unlimited: { products: Infinity, analytics: true }
 } as const
 
-// Stripe price IDs with fallback
+// Stripe price IDs - must be set in .env file
 export const STRIPE_PRICES = {
-  basic_monthly: import.meta.env.VITE_STRIPE_PRICE_BASIC_MONTHLY || 'price_1SB68VDGBbR8XeGs5EqAmqyu',
-  pro_monthly: import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY || 'price_1Rrki6DGBbR8XeGsrr4iz7TY'
+  basic_monthly: import.meta.env.VITE_STRIPE_PRICE_BASIC_MONTHLY || '',
+  pro_monthly: import.meta.env.VITE_STRIPE_PRICE_PRO_MONTHLY || ''
 } as const
