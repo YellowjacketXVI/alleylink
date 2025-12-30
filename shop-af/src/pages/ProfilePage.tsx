@@ -540,34 +540,36 @@ const fetchProfile = async () => {
   const backgroundImage = profile.background_image || 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=2070&auto=format&fit=crop'
   const backgroundType = profile.background_type || 'image'
   const backgroundGradientDirection = profile.background_gradient_direction || 'white'
+  // Separate background color from button color (primary_color)
+  const backgroundColor = profile.background_color || primaryColor
 
   // Get gradient type directly from database
   const gradientType = profile.background_gradient_type || 'linear'
 
-  // Generate gradient based on type and direction
+  // Generate gradient based on type and direction - uses background_color (not primary_color)
   const getGradientStyle = () => {
     const targetColor = backgroundGradientDirection === 'white' ? '#FFFFFF' : '#000000'
 
     switch (gradientType) {
       case 'radial':
         return {
-          background: `radial-gradient(circle at center, ${primaryColor} 0%, ${targetColor} 100%)`,
+          background: `radial-gradient(circle at center, ${backgroundColor} 0%, ${targetColor} 100%)`,
           backgroundAttachment: 'fixed'
         }
       case 'diamond':
         return {
-          background: `conic-gradient(from 45deg at 50% 50%, ${primaryColor} 0deg, ${targetColor} 90deg, ${primaryColor} 180deg, ${targetColor} 270deg, ${primaryColor} 360deg)`,
+          background: `conic-gradient(from 45deg at 50% 50%, ${backgroundColor} 0deg, ${targetColor} 90deg, ${backgroundColor} 180deg, ${targetColor} 270deg, ${backgroundColor} 360deg)`,
           backgroundAttachment: 'fixed'
         }
       case 'vignette':
         return {
-          background: `radial-gradient(ellipse at center, ${primaryColor} 0%, ${primaryColor} 40%, ${targetColor} 100%)`,
+          background: `radial-gradient(ellipse at center, ${backgroundColor} 0%, ${backgroundColor} 40%, ${targetColor} 100%)`,
           backgroundAttachment: 'fixed'
         }
       case 'linear':
       default:
         return {
-          background: `linear-gradient(to right, ${primaryColor}, ${targetColor})`,
+          background: `linear-gradient(to right, ${backgroundColor}, ${targetColor})`,
           backgroundAttachment: 'fixed'
         }
     }
@@ -585,8 +587,9 @@ const fetchProfile = async () => {
     } else if (backgroundType === 'gradient') {
       return getGradientStyle()
     } else {
+      // Solid background uses background_color
       return {
-        backgroundColor: primaryColor
+        backgroundColor: backgroundColor
       }
     }
   }

@@ -22,6 +22,7 @@ export interface Profile {
   background_image?: string
   background_gradient_direction?: 'white' | 'black'
   background_gradient_type?: 'linear' | 'radial' | 'diamond' | 'vignette'
+  background_color?: string // Separate from primary_color (button color)
   display_name_color?: string
   display_name_font?: string // Support all font options dynamically
   card_style?: 'light' | 'dark' | 'custom'

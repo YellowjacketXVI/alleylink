@@ -26,7 +26,8 @@ export default function ProfileCustomization() {
       background_image: profile?.background_image || '',
       background_gradient_direction: profile?.background_gradient_direction || 'white',
       background_gradient_type: (profile?.background_gradient_type as 'linear' | 'radial' | 'diamond' | 'vignette') || 'linear',
-      primary_color: profile?.primary_color || '#3B82F6',
+      background_color: profile?.background_color || '#3B82F6', // Separate background color
+      primary_color: profile?.primary_color || '#3B82F6', // Button color only
       display_name_color: profile?.display_name_color || '#FFFFFF',
       display_name_font: profile?.display_name_font || 'inter',
       card_style: profile?.card_style || 'light',
@@ -214,10 +215,11 @@ export default function ProfileCustomization() {
         background_type: settings.background_type,
         background_image: settings.background_image,
         background_gradient_direction: settings.background_gradient_direction,
-        background_gradient_type: settings.background_gradient_type, // Now saved to database
-        primary_color: settings.primary_color,
+        background_gradient_type: settings.background_gradient_type,
+        background_color: settings.background_color, // Separate background color
+        primary_color: settings.primary_color, // Button color only
         display_name_color: settings.display_name_color,
-        display_name_font: settings.display_name_font, // Save font directly (no mapping needed)
+        display_name_font: settings.display_name_font,
         // Card styling fields
         card_style: settings.card_style,
         card_color: settings.card_color,
@@ -257,30 +259,30 @@ export default function ProfileCustomization() {
     }
   }
 
-  // Generate gradient based on type and direction
+  // Generate gradient based on type and direction - uses background_color (not primary_color)
   const getGradientStyle = () => {
     const targetColor = settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'
-    const primaryColor = settings.primary_color
+    const bgColor = settings.background_color
 
     switch (settings.background_gradient_type) {
       case 'radial':
         return {
-          background: `radial-gradient(circle at center, ${primaryColor} 0%, ${targetColor} 100%)`
+          background: `radial-gradient(circle at center, ${bgColor} 0%, ${targetColor} 100%)`
         }
       case 'diamond':
         // Diamond effect using conic gradient
         return {
-          background: `conic-gradient(from 45deg at 50% 50%, ${primaryColor} 0deg, ${targetColor} 90deg, ${primaryColor} 180deg, ${targetColor} 270deg, ${primaryColor} 360deg)`
+          background: `conic-gradient(from 45deg at 50% 50%, ${bgColor} 0deg, ${targetColor} 90deg, ${bgColor} 180deg, ${targetColor} 270deg, ${bgColor} 360deg)`
         }
       case 'vignette':
-        // Vignette effect - dark/light edges with primary color in center
+        // Vignette effect - dark/light edges with background color in center
         return {
-          background: `radial-gradient(ellipse at center, ${primaryColor} 0%, ${primaryColor} 40%, ${targetColor} 100%)`
+          background: `radial-gradient(ellipse at center, ${bgColor} 0%, ${bgColor} 40%, ${targetColor} 100%)`
         }
       case 'linear':
       default:
         return {
-          background: `linear-gradient(to right, ${primaryColor}, ${targetColor})`
+          background: `linear-gradient(to right, ${bgColor}, ${targetColor})`
         }
     }
   }
@@ -298,8 +300,9 @@ export default function ProfileCustomization() {
     } else if (settings.background_type === 'gradient') {
       return getGradientStyle()
     } else {
+      // Solid background uses background_color
       return {
-        backgroundColor: settings.primary_color
+        backgroundColor: settings.background_color
       }
     }
   }
@@ -1159,7 +1162,7 @@ export default function ProfileCustomization() {
                         }`}
                       >
                         <div className="w-full h-5 rounded mb-1" style={{
-                          background: `linear-gradient(to right, ${settings.primary_color}, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'})`
+                          background: `linear-gradient(to right, ${settings.background_color}, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'})`
                         }}></div>
                         <span className="text-[10px] text-slate-300">Linear</span>
                       </button>
@@ -1172,7 +1175,7 @@ export default function ProfileCustomization() {
                         }`}
                       >
                         <div className="w-full h-5 rounded mb-1" style={{
-                          background: `radial-gradient(circle at center, ${settings.primary_color} 0%, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 100%)`
+                          background: `radial-gradient(circle at center, ${settings.background_color} 0%, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 100%)`
                         }}></div>
                         <span className="text-[10px] text-slate-300">Radial</span>
                       </button>
@@ -1185,7 +1188,7 @@ export default function ProfileCustomization() {
                         }`}
                       >
                         <div className="w-full h-5 rounded mb-1" style={{
-                          background: `conic-gradient(from 45deg at 50% 50%, ${settings.primary_color} 0deg, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 90deg, ${settings.primary_color} 180deg, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 270deg, ${settings.primary_color} 360deg)`
+                          background: `conic-gradient(from 45deg at 50% 50%, ${settings.background_color} 0deg, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 90deg, ${settings.background_color} 180deg, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 270deg, ${settings.background_color} 360deg)`
                         }}></div>
                         <span className="text-[10px] text-slate-300">Diamond</span>
                       </button>
@@ -1198,10 +1201,30 @@ export default function ProfileCustomization() {
                         }`}
                       >
                         <div className="w-full h-5 rounded mb-1" style={{
-                          background: `radial-gradient(ellipse at center, ${settings.primary_color} 0%, ${settings.primary_color} 40%, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 100%)`
+                          background: `radial-gradient(ellipse at center, ${settings.background_color} 0%, ${settings.background_color} 40%, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 100%)`
                         }}></div>
                         <span className="text-[10px] text-slate-300">Vignette</span>
                       </button>
+                    </div>
+                  </div>
+
+                  {/* Background Color Picker */}
+                  <div>
+                    <label className="text-xs text-slate-300 mb-2 block">Background Color</label>
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="color"
+                        value={settings.background_color}
+                        onChange={(e) => setSettings({ ...settings, background_color: e.target.value })}
+                        className="w-12 h-12 rounded-lg border-2 border-slate-600 cursor-pointer bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={settings.background_color}
+                        onChange={(e) => setSettings({ ...settings, background_color: e.target.value })}
+                        className="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm"
+                        placeholder="#3B82F6"
+                      />
                     </div>
                   </div>
 
@@ -1236,6 +1259,34 @@ export default function ProfileCustomization() {
                         <span className="text-[10px] text-slate-300">To Black</span>
                       </button>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Solid Background Color Picker */}
+              {settings.background_type === 'solid' && (
+                <div>
+                  <label className="text-xs text-slate-300 mb-2 block">Background Color</label>
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="color"
+                      value={settings.background_color}
+                      onChange={(e) => setSettings({ ...settings, background_color: e.target.value })}
+                      className="w-12 h-12 rounded-lg border-2 border-slate-600 cursor-pointer bg-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={settings.background_color}
+                      onChange={(e) => setSettings({ ...settings, background_color: e.target.value })}
+                      className="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm"
+                      placeholder="#3B82F6"
+                    />
+                  </div>
+                  {/* Preview */}
+                  <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: settings.background_color }}>
+                    <p className="text-xs text-center" style={{ color: getLuminance(settings.background_color) < 128 ? '#FFFFFF' : '#000000' }}>
+                      Background Preview
+                    </p>
                   </div>
                 </div>
               )}
