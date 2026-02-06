@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Types for Shop AF
+// Types for AlleyLink
 export interface Profile {
   user_id: string
   username: string

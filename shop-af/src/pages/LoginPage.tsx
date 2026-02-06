@@ -57,7 +57,7 @@ export default function LoginPage() {
               Welcome Back
             </h1>
             <p className="text-gray-600">
-              Sign in to your Shop AF account
+              Sign in to your AlleyLink account
             </p>
           </div>
 

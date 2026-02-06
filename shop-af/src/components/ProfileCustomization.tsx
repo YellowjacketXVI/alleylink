@@ -229,8 +229,6 @@ export default function ProfileCustomization() {
         updated_at: new Date().toISOString()
       }
 
-      console.log('Saving profile customization:', updateData)
-
       const { data: updatedData, error } = await supabase
         .from('profiles')
         .update(updateData)
@@ -242,8 +240,6 @@ export default function ProfileCustomization() {
         console.error('Database error:', error)
         throw error
       }
-
-      console.log('Profile updated successfully, returned data:', updatedData)
 
       // Refresh the profile to get updated data
       await refreshProfile()
@@ -556,8 +552,8 @@ export default function ProfileCustomization() {
                               border: `1px solid ${hexToRgba(settings.card_color, 0.3)}`
                             }}
                           >
-                            <div className="w-full h-12 bg-white/20 flex items-center justify-center">
-                              <svg className="w-3 h-3" fill="none" stroke={settings.card_text_color} viewBox="0 0 24 24">
+                            <div className="w-full aspect-square bg-white/20 flex items-center justify-center">
+                              <svg className="w-4 h-4" fill="none" stroke={settings.card_text_color} viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={product.icon} />
                               </svg>
                             </div>

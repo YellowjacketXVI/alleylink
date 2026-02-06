@@ -11,7 +11,6 @@ export default function TestPage() {
 
   const testSupabaseConnection = async () => {
     try {
-      console.log('Testing Supabase connection...')
       setTestResult('Testing Supabase connection...')
 
       // Test basic connection
@@ -26,8 +25,6 @@ export default function TestPage() {
         return
       }
 
-      console.log('Supabase connection successful!')
-      console.log('Profiles found:', data)
       setTestResult('Supabase connection successful!')
       setProfiles(data || [])
     } catch (err: any) {

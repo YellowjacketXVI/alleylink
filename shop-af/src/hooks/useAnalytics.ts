@@ -45,12 +45,10 @@ export function useAnalytics() {
 
   const fetchAnalytics = async (skipLoading = false) => {
     if (!user?.id) {
-      console.log('[Analytics] No user ID available')
       return
     }
 
     try {
-      console.log('[Analytics] Fetching analytics for user:', user.id)
       if (!skipLoading) {
         setLoading(true)
       }
@@ -66,7 +64,6 @@ export function useAnalytics() {
       if (productsError) throw productsError
 
       const productIds = (products || []).map(p => p.id)
-      console.log('[Analytics] Found products:', productIds.length)
 
       // Early return if no products
       if (!productIds.length) {
@@ -116,7 +113,6 @@ export function useAnalytics() {
         productClicks
       }
 
-      console.log('[Analytics] Final analytics data:', analyticsData)
       setAnalytics(analyticsData)
     } catch (err: any) {
       console.error('[Analytics] Fetch error:', err)

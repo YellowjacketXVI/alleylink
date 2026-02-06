@@ -13,7 +13,7 @@ import SubscriptionManager from '../components/SubscriptionManager'
 import {
   Plus,
   Package,
-  Settings,
+  Palette,
   TrendingUp,
   Link as LinkIcon,
   Crown,
@@ -23,30 +23,51 @@ import {
   Star,
   Tag,
   ChevronDown,
-  Zap
+  Zap,
+  User,
+  CreditCard
 } from 'lucide-react'
 import { PLAN_LIMITS, type Product } from '../lib/supabase'
 
+// Mobile detection hook (matches deployed version)
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined)
+
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`)
+    const onChange = () => setIsMobile(window.innerWidth < breakpoint)
+    mql.addEventListener('change', onChange)
+    setIsMobile(window.innerWidth < breakpoint)
+    return () => mql.removeEventListener('change', onChange)
+  }, [breakpoint])
+
+  return !!isMobile
+}
+
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<'products' | 'analytics' | 'settings'>('products')
+  const [activeTab, setActiveTab] = useState<'products' | 'analytics' | 'customization' | 'profile' | 'subscription'>('products')
   const [showProductForm, setShowProductForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isTabDropdownOpen, setIsTabDropdownOpen] = useState(false)
+  const isMobile = useIsMobile()
   const { user, profile } = useAuth()
-
-  console.log('DashboardPage render - user:', user?.id, 'profile:', profile?.username)
 
   const { products, loading, addProduct, updateProduct, deleteProduct, trackClick } = useProducts()
   const { analytics, loading: analyticsLoading } = useAnalytics()
   const { createSubscription, isSubscribed, isPro, loading: subscriptionLoading } = useSubscription()
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const tabDropdownRef = useRef<HTMLDivElement>(null)
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false)
+      }
+      if (tabDropdownRef.current && !tabDropdownRef.current.contains(event.target as Node)) {
+        setIsTabDropdownOpen(false)
       }
     }
 
@@ -120,16 +141,13 @@ export default function DashboardPage() {
   const tabs = [
     { id: 'products' as const, name: 'Products', icon: Package },
     { id: 'analytics' as const, name: 'Analytics', icon: TrendingUp },
-    { id: 'settings' as const, name: 'Customization', icon: Settings }
+    { id: 'customization' as const, name: 'Customization', icon: Palette },
+    { id: 'profile' as const, name: 'Profile', icon: User },
+    { id: 'subscription' as const, name: 'Subscription', icon: CreditCard }
   ]
 
   // Get all unique categories from products
   const categories = Array.from(new Set(products.flatMap(product => product.category_tags)))
-
-  // Debug logging
-  console.log('DashboardPage - Products:', products.length)
-  console.log('DashboardPage - Categories found:', categories)
-  console.log('DashboardPage - Selected category:', selectedCategory)
 
   // Create filter options combining categories and special filters
   const filterOptions = [
@@ -277,25 +295,76 @@ export default function DashboardPage() {
 
         {/* Tabs */}
         <div className="border-b border-gray-200 mb-6">
-          <nav className="flex space-x-8">
-            {tabs.map((tab) => {
-              const Icon = tab.icon
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-all ${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{tab.name}</span>
-                </button>
-              )
-            })}
-          </nav>
+          {isMobile ? (
+            /* Mobile: Dropdown selector for tabs */
+            <div className="relative py-2" ref={tabDropdownRef}>
+              <button
+                onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm hover:border-gray-400 transition-colors"
+              >
+                <div className="flex items-center space-x-2">
+                  {(() => {
+                    const currentTab = tabs.find(t => t.id === activeTab)
+                    const CurrentIcon = currentTab?.icon || Package
+                    return (
+                      <>
+                        <CurrentIcon className="w-5 h-5 text-blue-600" />
+                        <span className="font-medium text-gray-900">{currentTab?.name || 'Products'}</span>
+                      </>
+                    )
+                  })()}
+                </div>
+                <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${isTabDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isTabDropdownOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon
+                    const isActive = activeTab === tab.id
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                          setActiveTab(tab.id)
+                          setIsTabDropdownOpen(false)
+                        }}
+                        className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-colors ${
+                          isActive
+                            ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-500'
+                            : 'text-gray-700 hover:bg-gray-50 border-l-4 border-transparent'
+                        }`}
+                      >
+                        <Icon className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
+                        <span className="font-medium">{tab.name}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Desktop: Horizontal tab bar */
+            <nav className="flex space-x-8">
+              {tabs.map((tab) => {
+                const Icon = tab.icon
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-all ${
+                      activeTab === tab.id
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{tab.name}</span>
+                  </button>
+                )
+              })}
+            </nav>
+          )}
         </div>
 
         {/* Tab Content */}
@@ -578,10 +647,10 @@ export default function DashboardPage() {
                     </button>
 
                     <button
-                      onClick={() => setActiveTab('settings')}
+                      onClick={() => setActiveTab('customization')}
                       className="flex items-center space-x-3 p-4 bg-white rounded-lg hover:shadow-md transition-shadow border border-gray-200"
                     >
-                      <Settings className="w-5 h-5 text-purple-600" />
+                      <Palette className="w-5 h-5 text-purple-600" />
                       <div className="text-left">
                         <p className="font-medium text-gray-900">Customize</p>
                         <p className="text-sm text-gray-500">Update your profile</p>
@@ -594,17 +663,19 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {activeTab === 'settings' && (
-          <div className="space-y-8">
-            <SubscriptionManager />
+        {activeTab === 'customization' && (
+          <ProfileCustomization />
+        )}
 
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Profile Settings</h2>
-              <ProfileSettings />
-            </div>
-
-            <ProfileCustomization />
+        {activeTab === 'profile' && (
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Profile Settings</h2>
+            <ProfileSettings />
           </div>
+        )}
+
+        {activeTab === 'subscription' && (
+          <SubscriptionManager />
         )}
       </div>
 
@@ -616,6 +687,7 @@ export default function DashboardPage() {
             description: editingProduct.description || '',
             affiliate_url: editingProduct.affiliate_url,
             image_url: editingProduct.image_url || '',
+            bg_color: editingProduct.bg_color || '',
             category_tags: editingProduct.category_tags || [],
             is_featured: editingProduct.is_featured || false,
             is_active: editingProduct.is_active ?? true

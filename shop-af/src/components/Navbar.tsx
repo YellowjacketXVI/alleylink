@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Menu, X, User, Settings, LogOut, ShoppingBag } from 'lucide-react'
 
@@ -12,6 +12,9 @@ export default function Navbar({ transparent = false }: NavbarProps) {
   const [imageError, setImageError] = useState(false)
   const { user, profile, signOut } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  const isActive = (path: string) => location.pathname === path
 
   const handleSignOut = async () => {
     await signOut()
@@ -54,17 +57,17 @@ export default function Navbar({ transparent = false }: NavbarProps) {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/pricing" className={`${textClasses} hover:text-blue-600 transition-colors`}>
+            <Link to="/pricing" className={`${isActive('/pricing') ? 'text-blue-600 font-semibold' : textClasses} hover:text-blue-600 transition-colors`}>
               Pricing
             </Link>
 
             {user ? (
               <>
-                <Link to="/dashboard" className={`${textClasses} hover:text-blue-600 transition-colors`}>
+                <Link to="/dashboard" className={`${isActive('/dashboard') ? 'text-blue-600 font-semibold' : textClasses} hover:text-blue-600 transition-colors`}>
                   Dashboard
                 </Link>
                 {profile?.is_admin && (
-                  <Link to="/admin" className={`${textClasses} hover:text-blue-600 transition-colors`}>
+                  <Link to="/admin" className={`${isActive('/admin') ? 'text-blue-600 font-semibold' : textClasses} hover:text-blue-600 transition-colors`}>
                     Admin
                   </Link>
                 )}
@@ -148,7 +151,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
               <Link
                 to="/pricing"
                 onClick={() => setIsMenuOpen(false)}
-                className={`${textClasses} hover:text-blue-600 transition-colors`}
+                className={`${isActive('/pricing') ? 'text-blue-600 font-semibold' : textClasses} hover:text-blue-600 transition-colors`}
               >
                 Pricing
               </Link>
@@ -158,7 +161,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                   <Link
                     to="/dashboard"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`${textClasses} hover:text-blue-600 transition-colors`}
+                    className={`${isActive('/dashboard') ? 'text-blue-600 font-semibold' : textClasses} hover:text-blue-600 transition-colors`}
                   >
                     Dashboard
                   </Link>

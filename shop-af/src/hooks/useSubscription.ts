@@ -41,20 +41,9 @@ export function useSubscription() {
     setError(null)
 
     try {
-      // Development-only logging
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Invoking create-subscription with planType:', planType)
-        console.log('Expected Basic price ID:', STRIPE_CONFIG.prices.basic.monthly)
-        console.log('Expected Pro price ID:', STRIPE_CONFIG.prices.pro.monthly)
-      }
-
       const { data, error } = await supabase.functions.invoke('create-subscription', {
         body: { planType }
       })
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('create-subscription response:', { data, error })
-      }
 
       if (error) {
         throw new Error(`Subscription creation failed: ${error.message || 'Unknown error'}`)

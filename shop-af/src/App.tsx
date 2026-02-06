@@ -19,6 +19,8 @@ const TestPage = lazy(() => import('./pages/TestPage'))
 const CreateProfilePage = lazy(() => import('./pages/CreateProfilePage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
+const TermsPage = lazy(() => import('./pages/TermsPage'))
+const HelpCenterPage = lazy(() => import('./pages/HelpCenterPage'))
 
 // Global styles
 import './App.css'
@@ -37,6 +39,8 @@ function App() {
                     {/* Public Routes */}
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/pricing" element={<PricingPage />} />
+                    <Route path="/terms" element={<TermsPage />} />
+                    <Route path="/help" element={<HelpCenterPage />} />
                     <Route path="/test" element={<TestPage />} />
 
                     {/* Auth Routes - Redirect authenticated users */}

@@ -43,8 +43,6 @@ export default function CreateProfilePage() {
         updated_at: new Date().toISOString()
       }
 
-      console.log('Creating profile manually:', newProfile)
-
       const { data, error } = await supabase
         .from('profiles')
         .insert([newProfile])
@@ -56,7 +54,6 @@ export default function CreateProfilePage() {
         throw error
       }
 
-      console.log('Profile created successfully:', data)
       setSuccess(true)
       
       // Refresh the auth context

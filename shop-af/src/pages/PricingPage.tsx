@@ -244,7 +244,7 @@ export default function PricingPage() {
                 Ready to Start Your Journey?
               </h2>
               <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-                Join thousands of creators who are building successful affiliate businesses with Shop AF.
+                Join thousands of creators who are building successful affiliate businesses with AlleyLink.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

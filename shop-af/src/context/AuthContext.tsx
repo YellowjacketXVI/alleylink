@@ -57,15 +57,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadProfile = useCallback(async (userId: string) => {
     try {
-      console.log('AuthContext: Loading profile for userId:', userId)
-
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle()
-
-      console.log('AuthContext: Profile fetch result:', { data, error })
 
       if (error) {
         console.error('AuthContext: Error loading profile:', error)
@@ -74,14 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data) {
-        console.log('AuthContext: Profile loaded successfully:', data.username)
         setProfile(data)
       } else {
-        console.log('AuthContext: No profile found for user, creating one...')
-        console.log('About to call createMissingProfile with userId:', userId)
         try {
           await createMissingProfile(userId)
-          console.log('createMissingProfile completed')
         } catch (createError) {
           console.error('Failed to create missing profile:', createError)
           setProfile(null)
@@ -95,10 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const createMissingProfile = async (userId: string) => {
     try {
-      console.log('Creating missing profile for userId:', userId)
-
-      // Get user email from auth
-      console.log('Getting user data from Supabase auth...')
       const { data: { user }, error: userError } = await supabase.auth.getUser()
 
       if (userError) {
@@ -110,8 +98,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('No authenticated user found')
         return
       }
-
-      console.log('User data retrieved:', { email: user.email, metadata: user.user_metadata })
 
       // Generate a username from email or use a default
       const email = user.email || ''
@@ -134,15 +120,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updated_at: new Date().toISOString()
       }
 
-      console.log('Attempting to insert profile:', newProfile)
-
       const { data, error } = await supabase
         .from('profiles')
         .insert([newProfile])
         .select()
         .single()
-
-      console.log('Insert result:', { data, error })
 
       if (error) {
         console.error('Error creating profile:', error)
@@ -150,7 +132,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
-      console.log('Profile created successfully:', data)
       setProfile(data)
     } catch (error) {
       console.error('Exception creating profile:', error)

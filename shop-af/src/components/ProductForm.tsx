@@ -9,6 +9,7 @@ interface ProductFormData {
   description: string
   affiliate_url: string
   image_url?: string
+  bg_color?: string
   category_tags: string[]
   is_featured: boolean
   is_active: boolean
@@ -26,6 +27,7 @@ export default function ProductForm({ onClose, onSubmit, initialData }: ProductF
     description: initialData?.description || '',
     affiliate_url: initialData?.affiliate_url || '',
     image_url: initialData?.image_url || '',
+    bg_color: initialData?.bg_color || '',
     category_tags: initialData?.category_tags || [],
     is_featured: initialData?.is_featured || false,
     is_active: initialData?.is_active ?? true
@@ -266,19 +268,53 @@ export default function ProductForm({ onClose, onSubmit, initialData }: ProductF
             </label>
 
             {formData.image_url ? (
-              <div className="relative">
-                <img
-                  src={formData.image_url}
-                  alt="Product preview"
-                  className="w-full h-48 object-contain bg-gray-50 rounded-xl border border-gray-200"
-                />
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
-                  className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              <div className="space-y-3">
+                <div
+                  className="relative aspect-square max-w-[240px] mx-auto overflow-hidden rounded-xl border border-gray-200"
+                  style={{ backgroundColor: formData.bg_color || '#f9fafb' }}
                 >
-                  <X className="w-4 h-4" />
-                </button>
+                  <img
+                    src={formData.image_url}
+                    alt="Product preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, image_url: '' }))}
+                    className="absolute top-2 right-2 p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Background Color Picker */}
+                <div className="flex items-center space-x-3">
+                  <label className="text-sm text-gray-600 whitespace-nowrap">Background Color</label>
+                  <div className="flex items-center space-x-2 flex-1">
+                    <input
+                      type="color"
+                      value={formData.bg_color || '#f9fafb'}
+                      onChange={(e) => setFormData(prev => ({ ...prev, bg_color: e.target.value }))}
+                      className="w-8 h-8 rounded cursor-pointer border border-gray-300"
+                    />
+                    <input
+                      type="text"
+                      value={formData.bg_color || ''}
+                      onChange={(e) => setFormData(prev => ({ ...prev, bg_color: e.target.value }))}
+                      className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="#f9fafb"
+                    />
+                    {formData.bg_color && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, bg_color: '' }))}
+                        className="text-xs text-gray-500 hover:text-gray-700 underline"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-500 transition-colors">

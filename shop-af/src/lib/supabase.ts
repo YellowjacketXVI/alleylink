@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Types for Shop AF
+// Types for AlleyLink
 export interface Profile {
   user_id: string
   username: string
@@ -46,6 +46,7 @@ export interface Product {
   title: string
   description?: string
   image_url?: string
+  bg_color?: string
   affiliate_url: string
   category_tags: string[]
   click_count: number
@@ -111,7 +112,7 @@ export interface ProfileViewAnalytics {
 
 // Plan limits
 export const PLAN_LIMITS = {
-  free: { products: 3, analytics: false },
+  free: { products: 9, analytics: false },
   basic: { products: 100, analytics: true },
   pro: { products: Infinity, analytics: true },
   unlimited: { products: Infinity, analytics: true }

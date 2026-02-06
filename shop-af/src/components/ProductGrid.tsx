@@ -99,20 +99,21 @@ export default function ProductGrid({
           )}
 
           {/* Product Image */}
-          <div className="relative overflow-hidden aspect-square">
+          <div
+            className="relative overflow-hidden aspect-square"
+            style={{ backgroundColor: product.bg_color || (product.image_url ? '#f3f4f6' : undefined) }}
+          >
             {product.image_url ? (
               <img
                 src={product.image_url}
                 alt={product.title}
-                className="w-full h-full object-contain bg-gray-100 group-hover:scale-110 transition-transform duration-300"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                 <Tag className="w-12 h-12 text-gray-400" />
               </div>
             )}
-
-            {/* Removed hover overlay as requested */}
           </div>
 
           {/* Product Details */}

@@ -121,13 +121,6 @@ const getDisplayNameStyle = (profile: Profile) => {
   // Get font family from map, fallback to Inter if not found
   const fontFamily = fontMap[fontToUse] || 'Inter, sans-serif'
 
-  console.log('ProfilePage - Font styling:', {
-    database_font: profile.display_name_font,
-    final_font: fontToUse,
-    final_fontFamily: fontFamily,
-    final_color: colorToUse
-  })
-
   return {
     fontFamily,
     color: colorToUse,
@@ -151,110 +144,27 @@ export default function ProfilePage() {
   // Only fetch products after profile is loaded
   const { products, loading: productsLoading, trackClick } = useProducts(profile?.user_id)
 
-  // Load Google Fonts dynamically when profile loads
+  // Load only the Google Font the profile actually uses (not all 70+)
   useEffect(() => {
     if (!profile) return
 
-    const loadGoogleFonts = () => {
-      // List of all Google Fonts used in the app
-      const googleFonts = [
-        'Inter:wght@400;700',
-        'Poppins:wght@400;700',
-        'Montserrat:wght@400;700',
-        'Roboto:wght@400;700',
-        'Open+Sans:wght@400;700',
-        'Lato:wght@400;700',
-        'Nunito:wght@400;700',
-        'Source+Sans+Pro:wght@400;700',
-        'Work+Sans:wght@400;700',
-        'Fira+Sans:wght@400;700',
-        'DM+Sans:wght@400;700',
-        'Rubik:wght@400;700',
-        'Merriweather:wght@400;700',
-        'Playfair+Display:wght@400;700',
-        'Crimson+Text:wght@400;700',
-        'Lora:wght@400;700',
-        'Cormorant+Garamond:wght@400;700',
-        'EB+Garamond:wght@400;700',
-        'Libre+Baskerville:wght@400;700',
-        'Old+Standard+TT:wght@400;700',
-        'Spectral:wght@400;700',
-        'Vollkorn:wght@400;700',
-        'Orbitron:wght@400;700',
-        'Raleway:wght@400;700',
-        'Oswald:wght@400;700',
-        'Bebas+Neue:wght@400',
-        'Anton:wght@400',
-        'Bangers:wght@400',
-        'Fredoka+One:wght@400',
-        'Righteous:wght@400',
-        'Comfortaa:wght@400;700',
-        'Quicksand:wght@400;700',
-        'Archivo+Black:wght@400',
-        'Bungee:wght@400',
-        'Creepster:wght@400',
-        'Monoton:wght@400',
-        'Press+Start+2P:wght@400',
-        'Dancing+Script:wght@400;700',
-        'Pacifico:wght@400',
-        'Caveat:wght@400;700',
-        'Great+Vibes:wght@400',
-        'Sacramento:wght@400',
-        'Allura:wght@400',
-        'Satisfy:wght@400',
-        'Kaushan+Script:wght@400',
-        'Amatic+SC:wght@400;700',
-        'Shadows+Into+Light:wght@400',
-        'Indie+Flower:wght@400',
-        'Permanent+Marker:wght@400',
-        'Cookie:wght@400',
-        'Tangerine:wght@400;700',
-        'Lobster:wght@400',
-        'Courgette:wght@400',
-        'Fira+Code:wght@400;700',
-        'Source+Code+Pro:wght@400;700',
-        'Roboto+Mono:wght@400;700',
-        'Space+Mono:wght@400;700',
-        'JetBrains+Mono:wght@400;700',
-        'Ubuntu+Mono:wght@400;700',
-        'Nosifer:wght@400',
-        'Eater:wght@400',
-        'Chela+One:wght@400',
-        'Fascinate:wght@400',
-        'Griffy:wght@400',
-        'Henny+Penny:wght@400',
-        'Jolly+Lodger:wght@400',
-        'Kalam:wght@400;700',
-        'Lacquer:wght@400',
-        'Luckiest+Guy:wght@400',
-        'Mystery+Quest:wght@400',
-        'Pirata+One:wght@400',
-        'Rye:wght@400',
-        'Smokum:wght@400',
-        'Special+Elite:wght@400',
-        'Trade+Winds:wght@400',
-        'Vampiro+One:wght@400',
-        'Cinzel:wght@400;700',
-        'Cinzel+Decorative:wght@400;700',
-        'Forum:wght@400',
-        'Marcellus:wght@400',
-        'Yeseva+One:wght@400',
-        'Abril+Fatface:wght@400',
-        'Cardo:wght@400;700',
-        'Sorts+Mill+Goudy:wght@400',
-        'Unna:wght@400;700'
-      ]
+    const fontKey = profile.display_name_font || 'inter'
+    if (fontKey === 'sansserif') return // System font, no need to load
 
-      if (!document.querySelector('#profile-google-fonts')) {
-        const link = document.createElement('link')
-        link.id = 'profile-google-fonts'
-        link.href = `https://fonts.googleapis.com/css2?${googleFonts.join('&family=')}&display=swap`
-        link.rel = 'stylesheet'
-        document.head.appendChild(link)
-      }
+    // Extract the font family name from fontMap
+    const fontEntry = fontMap[fontKey]
+    if (!fontEntry) return
+
+    const fontFamily = fontEntry.split(',')[0].trim()
+    const fontId = `profile-font-${fontKey}`
+
+    if (!document.querySelector(`#${fontId}`)) {
+      const link = document.createElement('link')
+      link.id = fontId
+      link.href = `https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}:wght@400;700&display=swap`
+      link.rel = 'stylesheet'
+      document.head.appendChild(link)
     }
-
-    loadGoogleFonts()
   }, [profile])
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -274,12 +184,10 @@ export default function ProfilePage() {
   }, [])
 
 useEffect(() => {
-  console.log('ProfilePage useEffect triggered with username:', username)
   if (username) {
     fetchProfile()
 
     timeoutRef.current = setTimeout(() => {
-      console.log('Profile loading timeout reached')
       setLoadingTimeout(true)
       setLoading(false)
       setError('Profile loading timed out. Please try refreshing the page.')
@@ -289,7 +197,6 @@ useEffect(() => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
     }
   } else {
-    console.log('No username provided to ProfilePage')
     setLoading(false)
     setError('No username provided')
   }
@@ -324,7 +231,6 @@ const fetchProfile = async () => {
   }
 
   try {
-    console.log('Fetching profile for username:', username)
     setLoading(true)
     setError(null)
 
@@ -333,8 +239,6 @@ const fetchProfile = async () => {
       .select('*')
       .eq('username', username.toLowerCase())
       .maybeSingle()
-
-    console.log('Profile fetch result:', { data, error })
 
     if (error) {
       console.error('Supabase error:', error)
@@ -348,7 +252,6 @@ const fetchProfile = async () => {
       return
     }
 
-    console.log('Profile loaded successfully:', data)
     setProfile(data)
   } catch (err: any) {
     console.error('Profile fetch error:', err)
@@ -411,11 +314,6 @@ const fetchProfile = async () => {
 
   // Get all unique categories from products
   const categories = Array.from(new Set(products.flatMap(product => product.category_tags)))
-
-  // Debug logging
-  console.log('ProfilePage - Products:', products.length)
-  console.log('ProfilePage - Categories found:', categories)
-  console.log('ProfilePage - Selected category:', selectedCategory)
 
   // Create filter options combining categories and special filters
   const filterOptions = [
@@ -519,14 +417,6 @@ const fetchProfile = async () => {
 
   const glassColorRgb = hexToRgb(glassTintColor)
   
-  // Debug logging for card styling
-  console.log('ProfilePage - Card styling:', {
-    database_card_color: profile.card_color,
-    database_card_text_color: profile.card_text_color,
-    final_cardColor: cardColor,
-    final_cardTextColor: cardTextColor
-  })
-
   // Convert hex to rgba for glass effect
   const hexToRgba = (hex: string, alpha: number) => {
     const cleanHex = hex.replace('#', '')
@@ -855,21 +745,25 @@ const fetchProfile = async () => {
                       key={product.id}
                       className="product-card rounded-lg overflow-hidden glass-panel cursor-pointer hover:scale-105 transition-transform duration-300"
                       onClick={() => {
-                        console.log('Product card clicked:', product.id, product.title)
                         trackClick(product.id, product.affiliate_url)
                       }}
                     >
-                      {product.image_url ? (
-                        <img
-                          src={product.image_url}
-                          alt={product.title}
-                          className="w-full h-40 sm:h-56 object-contain bg-gray-100"
-                        />
-                      ) : (
-                        <div className="w-full h-40 sm:h-56 bg-white/20 flex items-center justify-center">
-                          <Tag className="w-12 h-12 product-text" />
-                        </div>
-                      )}
+                      <div
+                        className="relative w-full aspect-square overflow-hidden"
+                        style={{ backgroundColor: product.bg_color || (product.image_url ? '#f3f4f6' : undefined) }}
+                      >
+                        {product.image_url ? (
+                          <img
+                            src={product.image_url}
+                            alt={product.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-white/20 flex items-center justify-center">
+                            <Tag className="w-12 h-12 product-text" />
+                          </div>
+                        )}
+                      </div>
                       <div className="p-3 sm:p-4">
                         <h3 className="product-text font-semibold text-sm sm:text-lg mb-1">
                           {product.title}
@@ -885,7 +779,6 @@ const fetchProfile = async () => {
                           style={{ backgroundColor: primaryColor, color: 'white' }}
                           onClick={(e) => {
                             e.stopPropagation()
-                            console.log('Product button clicked:', product.id, product.title)
                             trackClick(product.id, product.affiliate_url)
                           }}
                         >
