@@ -62,8 +62,6 @@ function FloatingParticles() {
 export default function PricingPage() {
   const { user, profile } = useAuth()
   const { createSubscription, isPro, loading: subscriptionLoading } = useSubscription()
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
-
   const cardsRef = useScrollFade()
   const ctaRef = useScrollFade()
 
@@ -86,7 +84,6 @@ export default function PricingPage() {
       id: 'free',
       name: 'Free Trial',
       monthlyPrice: 0,
-      yearlyPrice: 0,
       description: 'Try AlleyLink with limited features',
       features: [
         'Up to 9 products',
@@ -113,7 +110,6 @@ export default function PricingPage() {
       id: 'basic',
       name: 'Basic',
       monthlyPrice: 2.99,
-      yearlyPrice: 2.39,
       description: 'Perfect for growing affiliate marketers',
       features: [
         'Up to 100 products',
@@ -141,7 +137,6 @@ export default function PricingPage() {
       id: 'pro',
       name: 'Pro',
       monthlyPrice: 4.99,
-      yearlyPrice: 3.99,
       description: 'For serious affiliate marketers',
       features: [
         'Unlimited products',
@@ -197,33 +192,6 @@ export default function PricingPage() {
             <p className="text-base md:text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed mb-6">
               Get your link, add products, start earning. No hidden fees, no complexity.
             </p>
-
-            {/* Monthly / Yearly Toggle */}
-            <div className="inline-flex items-center glass rounded-full p-1">
-              <button
-                onClick={() => setBillingCycle('monthly')}
-                className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-all ${
-                  billingCycle === 'monthly'
-                    ? 'bg-white text-purple-700 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setBillingCycle('yearly')}
-                className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-all ${
-                  billingCycle === 'yearly'
-                    ? 'bg-white text-purple-700 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Yearly
-                <span className="ml-1.5 text-[10px] font-bold bg-gradient-to-r from-gold-400 to-gold-500 text-white px-1.5 py-0.5 rounded-full">
-                  SAVE 20%
-                </span>
-              </button>
-            </div>
           </div>
 
           {/* Pricing Cards */}
@@ -294,19 +262,13 @@ export default function PricingPage() {
                     <div className={`text-3xl lg:text-4xl font-extrabold mb-1 font-accent ${
                       plan.popular ? 'text-white' : 'text-gray-900'
                     }`}>
-                      ${(billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice).toFixed(2)}
+                      ${plan.monthlyPrice.toFixed(2)}
                       <span className={`text-base lg:text-lg font-sans font-medium ${
                         plan.popular ? 'text-purple-200' : 'text-gray-500'
                       }`}>
                         {plan.monthlyPrice > 0 ? '/month' : ''}
                       </span>
                     </div>
-
-                    {billingCycle === 'yearly' && plan.yearlyPrice > 0 && (
-                      <p className={`text-xs ${plan.popular ? 'text-purple-200' : 'text-gray-500'}`}>
-                        Billed as ${(plan.yearlyPrice * 12).toFixed(2)}/year
-                      </p>
-                    )}
 
                     <p className={`text-sm mt-1 ${
                       plan.popular ? 'text-purple-100' : 'text-gray-500'

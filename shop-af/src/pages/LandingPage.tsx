@@ -63,7 +63,6 @@ export default function LandingPage() {
   const { user } = useAuth()
   const { createSubscription, isPro, loading: subscriptionLoading } = useSubscription()
   const [footerImageError, setFooterImageError] = useState(false)
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
 
   const howRef = useScrollFade()
   const featuresRef = useScrollFade()
@@ -82,7 +81,6 @@ export default function LandingPage() {
   }
 
   const monthlyPrice = 4.99
-  const yearlyPrice = 3.99
 
   return (
     <div className="min-h-screen font-sans">
@@ -303,33 +301,6 @@ export default function LandingPage() {
             <p className="text-base text-gray-600 mb-6">
               Start free, upgrade when you're ready to scale.
             </p>
-
-            {/* Monthly / Yearly Toggle */}
-            <div className="inline-flex items-center glass rounded-full p-1 scroll-fade delay-1">
-              <button
-                onClick={() => setBillingCycle('monthly')}
-                className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-all ${
-                  billingCycle === 'monthly'
-                    ? 'bg-white text-purple-700 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Monthly
-              </button>
-              <button
-                onClick={() => setBillingCycle('yearly')}
-                className={`px-5 py-1.5 rounded-full text-sm font-semibold transition-all ${
-                  billingCycle === 'yearly'
-                    ? 'bg-white text-purple-700 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Yearly
-                <span className="ml-1.5 text-[10px] font-bold bg-gradient-to-r from-gold-400 to-gold-500 text-white px-1.5 py-0.5 rounded-full">
-                  SAVE 20%
-                </span>
-              </button>
-            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -385,14 +356,9 @@ export default function LandingPage() {
                 <div className="relative text-center mb-5 mt-4">
                   <h3 className="text-lg font-extrabold text-white mb-1">Pro Plan</h3>
                   <div className="text-3xl font-extrabold text-white mb-2 font-accent">
-                    ${billingCycle === 'monthly' ? monthlyPrice.toFixed(2) : yearlyPrice.toFixed(2)}
+                    ${monthlyPrice.toFixed(2)}
                     <span className="text-sm text-purple-200 font-sans font-medium">/month</span>
                   </div>
-                  {billingCycle === 'yearly' && (
-                    <p className="text-xs text-purple-200">
-                      Billed as ${(yearlyPrice * 12).toFixed(2)}/year
-                    </p>
-                  )}
                   <p className="text-purple-100 text-sm mt-1">For serious affiliate marketers</p>
                 </div>
 
