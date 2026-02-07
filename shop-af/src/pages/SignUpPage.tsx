@@ -152,25 +152,25 @@ export default function SignUpPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Navbar />
 
-      <div className="py-12 px-4 sm:px-6 lg:px-8">
+      <div className="py-8 px-3 sm:px-4 lg:px-6">
         <div className="max-w-md mx-auto">
           {/* Back button */}
           <Link
             to="/"
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-8 transition-colors"
+            className="flex items-center text-gray-600 hover:text-gray-900 mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Link>
 
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center">
-                <ShoppingBag className="w-8 h-8 text-white" />
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <ShoppingBag className="w-6 h-6 text-white" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-fluid-xl font-bold text-gray-900 mb-2">
               Get Your Free Link
             </h1>
             <p className="text-gray-600">
@@ -179,8 +179,8 @@ export default function SignUpPage() {
           </div>
 
           {/* Form */}
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-2">
                   Display Name
@@ -190,7 +190,7 @@ export default function SignUpPage() {
                   type="text"
                   value={formData.displayName}
                   onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="Your full name"
                   required
                 />
@@ -206,7 +206,7 @@ export default function SignUpPage() {
                     type="text"
                     value={formData.username}
                     onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value.toLowerCase() }))}
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition-all pr-20 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent transition-all pr-20 ${
                       usernameStatus === 'available' ? 'border-green-300 focus:ring-green-500' :
                       usernameStatus === 'taken' || usernameStatus === 'invalid' ? 'border-red-300 focus:ring-red-500' :
                       'border-gray-300 focus:ring-blue-500'
@@ -258,7 +258,7 @@ export default function SignUpPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   placeholder="you@example.com"
                   required
                 />
@@ -274,7 +274,7 @@ export default function SignUpPage() {
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all pr-12"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all pr-12"
                     placeholder="••••••••"
                     required
                     minLength={6}
@@ -290,7 +290,7 @@ export default function SignUpPage() {
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2.5 rounded-lg text-sm">
                   {error}
                 </div>
               )}
@@ -298,7 +298,7 @@ export default function SignUpPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105"
               >
                 {loading ? 'Creating Account...' : 'Create Account'}
               </button>

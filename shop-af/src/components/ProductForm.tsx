@@ -198,10 +198,10 @@ export default function ProductForm({ onClose, onSubmit, initialData }: ProductF
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h2 className="text-fluid-xl font-bold text-gray-900">
             {initialData ? 'Edit Product' : 'Add New Product'}
           </h2>
           <button
@@ -213,7 +213,7 @@ export default function ProductForm({ onClose, onSubmit, initialData }: ProductF
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {/* Title */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
@@ -224,7 +224,7 @@ export default function ProductForm({ onClose, onSubmit, initialData }: ProductF
               type="text"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="Amazing Product Name"
               required
             />
@@ -239,7 +239,7 @@ export default function ProductForm({ onClose, onSubmit, initialData }: ProductF
               id="description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
               placeholder="Tell people why they'll love this product..."
               rows={3}
             />
@@ -255,7 +255,7 @@ export default function ProductForm({ onClose, onSubmit, initialData }: ProductF
               type="url"
               value={formData.affiliate_url}
               onChange={(e) => setFormData(prev => ({ ...prev, affiliate_url: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="https://example.com/your-affiliate-link"
               required
             />
@@ -317,7 +317,7 @@ export default function ProductForm({ onClose, onSubmit, initialData }: ProductF
                 </div>
               </div>
             ) : (
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-500 transition-colors">
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-blue-500 transition-colors">
                 <input
                   type="file"
                   accept="image/*"
@@ -385,7 +385,7 @@ export default function ProductForm({ onClose, onSubmit, initialData }: ProductF
                     onChange={handleTagInputChange}
                     onKeyDown={handleKeyDown}
                     onFocus={() => newTag.length > 0 && setShowSuggestions(true)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="Add a category tag..."
                   />
 
@@ -453,18 +453,18 @@ export default function ProductForm({ onClose, onSubmit, initialData }: ProductF
           )}
 
           {/* Actions */}
-          <div className="flex space-x-4 pt-6">
+          <div className="flex space-x-4 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || uploading}
-              className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Saving...' : initialData ? 'Update Product' : 'Add Product'}
             </button>

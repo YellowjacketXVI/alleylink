@@ -76,9 +76,9 @@ export default function CreateProfilePage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <div className="max-w-md mx-auto pt-20">
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <h1 className="text-2xl font-bold mb-4">Sign In Required</h1>
+        <div className="max-w-md mx-auto pt-12">
+          <div className="bg-white rounded-lg shadow p-4 text-center">
+            <h1 className="text-fluid-lg font-bold mb-3">Sign In Required</h1>
             <p className="text-gray-600">You must be signed in to create a profile.</p>
           </div>
         </div>
@@ -90,10 +90,10 @@ export default function CreateProfilePage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <div className="max-w-md mx-auto pt-20">
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <div className="text-green-600 text-6xl mb-4">✓</div>
-            <h1 className="text-2xl font-bold mb-4">Profile Created!</h1>
+        <div className="max-w-md mx-auto pt-12">
+          <div className="bg-white rounded-lg shadow p-4 text-center">
+            <div className="text-green-600 text-4xl mb-3">✓</div>
+            <h1 className="text-fluid-lg font-bold mb-3">Profile Created!</h1>
             <p className="text-gray-600 mb-4">Your profile has been created successfully.</p>
             <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
           </div>
@@ -105,9 +105,9 @@ export default function CreateProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="max-w-md mx-auto pt-20">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h1 className="text-2xl font-bold mb-6 text-center">Create Your Profile</h1>
+      <div className="max-w-md mx-auto pt-12">
+        <div className="bg-white rounded-lg shadow p-4">
+          <h1 className="text-fluid-lg font-bold mb-4 text-center">Create Your Profile</h1>
           
           <div className="mb-4 p-3 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-800">
@@ -124,7 +124,7 @@ export default function CreateProfilePage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Username *

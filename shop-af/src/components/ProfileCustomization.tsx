@@ -2,20 +2,117 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useImageUpload } from '../hooks/useImageUpload'
 import { supabase } from '../lib/supabase'
-import { Palette, Image, Layers, Save, Upload, Type, Sparkles, ChevronDown, Store, X, ExternalLink, Eye, EyeOff, Maximize2, Minimize2, GripVertical } from 'lucide-react'
+import { Palette, Image, Layers, Save, Upload, Sparkles, ChevronDown, Store, X, ExternalLink, Eye, EyeOff, Maximize2, Minimize2, Package, Info, Search, Wand2 } from 'lucide-react'
 
-export default function ProfileCustomization() {
+// ── Curated color swatches (Tailwind-inspired brand-safe palette) ──
+const COLOR_SWATCHES = [
+  '#FFFFFF', '#000000', '#EF4444', '#F97316', '#EAB308', '#22C55E',
+  '#3B82F6', '#8B5CF6', '#EC4899', '#6366F1', '#14B8A6', '#F43F5E',
+]
+
+// ── Theme presets — one-click starter looks ──
+const THEME_PRESETS = [
+  {
+    name: 'Minimal',
+    preview: { bg: '#FFFFFF', card: '#F8FAFC', accent: '#3B82F6' },
+    settings: {
+      background_type: 'solid' as const, background_color: '#F8FAFC',
+      background_gradient_direction: 'white' as const, background_gradient_type: 'linear' as const,
+      background_image: '', primary_color: '#3B82F6', display_name_color: '#1E293B',
+      display_name_font: 'inter', card_style: 'light' as const, card_color: '#FFFFFF',
+      card_text_color: '#1E293B', glass_mode: 'matte' as const, glass_tint: '#FFFFFF',
+    }
+  },
+  {
+    name: 'Dark',
+    preview: { bg: '#0F172A', card: '#1E293B', accent: '#8B5CF6' },
+    settings: {
+      background_type: 'solid' as const, background_color: '#0F172A',
+      background_gradient_direction: 'black' as const, background_gradient_type: 'linear' as const,
+      background_image: '', primary_color: '#8B5CF6', display_name_color: '#F8FAFC',
+      display_name_font: 'inter', card_style: 'dark' as const, card_color: '#1E293B',
+      card_text_color: '#F1F5F9', glass_mode: 'gloss' as const, glass_tint: '#1E293B',
+    }
+  },
+  {
+    name: 'Noir V',
+    preview: { bg: '#1A1A1A', card: '#2A2A2A', accent: '#DC2626', labelColor: '#FFFFFF' },
+    settings: {
+      background_type: 'solid' as const, background_color: '#1A1A1A',
+      background_gradient_direction: 'black' as const, background_gradient_type: 'linear' as const,
+      background_image: '', primary_color: '#DC2626', display_name_color: '#FECACA',
+      display_name_font: 'playfair-display', card_style: 'dark' as const, card_color: '#2A2A2A',
+      card_text_color: '#FECACA', glass_mode: 'gloss' as const, glass_tint: '#7F1D1D',
+    }
+  },
+  {
+    name: 'Rosé',
+    preview: { bg: '#EC4899', card: '#FDF2F8', accent: '#DC2626' },
+    settings: {
+      background_type: 'gradient' as const, background_color: '#EC4899',
+      background_gradient_direction: 'white' as const, background_gradient_type: 'radial' as const,
+      background_image: '', primary_color: '#DC2626', display_name_color: '#FFFFFF',
+      display_name_font: 'dancing-script', card_style: 'light' as const, card_color: '#FDF2F8',
+      card_text_color: '#9F1239', glass_mode: 'matte' as const, glass_tint: '#FDA4AF',
+    }
+  },
+  {
+    name: 'Neon',
+    preview: { bg: '#18181B', card: '#27272A', accent: '#22D3EE', labelColor: '#FFFFFF' },
+    settings: {
+      background_type: 'solid' as const, background_color: '#18181B',
+      background_gradient_direction: 'black' as const, background_gradient_type: 'linear' as const,
+      background_image: '', primary_color: '#22D3EE', display_name_color: '#22D3EE',
+      display_name_font: 'orbitron', card_style: 'dark' as const, card_color: '#27272A',
+      card_text_color: '#E4E4E7', glass_mode: 'gloss' as const, glass_tint: '#22D3EE',
+    }
+  },
+  {
+    name: 'Candy',
+    preview: { bg: '#EC4899', card: '#FDF2F8', accent: '#DB2777' },
+    settings: {
+      background_type: 'gradient' as const, background_color: '#EC4899',
+      background_gradient_direction: 'white' as const, background_gradient_type: 'diamond' as const,
+      background_image: '', primary_color: '#DB2777', display_name_color: '#FFFFFF',
+      display_name_font: 'fredoka', card_style: 'light' as const, card_color: '#FDF2F8',
+      card_text_color: '#831843', glass_mode: 'matte' as const, glass_tint: '#F9A8D4',
+    }
+  },
+]
+
+interface ProfileCustomizationProps {
+  onUnsavedChange?: (hasChanges: boolean) => void
+}
+
+export default function ProfileCustomization({ onUnsavedChange }: ProfileCustomizationProps) {
   const { profile, refreshProfile } = useAuth()
   const { uploadImage, uploading, error: uploadError } = useImageUpload()
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [fontDropdownOpen, setFontDropdownOpen] = useState(false)
-  const [activeSection, setActiveSection] = useState<'material' | 'title' | 'background'>('material')
+  const [fontSearch, setFontSearch] = useState('')
   const [mobilePreviewOpen, setMobilePreviewOpen] = useState(false)
+
+  // Detect compact layout (< lg breakpoint = no side-by-side preview)
+  const [isCompact, setIsCompact] = useState(false)
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 1023px)')
+    const onChange = () => setIsCompact(mql.matches)
+    mql.addEventListener('change', onChange)
+    setIsCompact(mql.matches)
+    return () => mql.removeEventListener('change', onChange)
+  }, [])
+
+  // On compact/mobile: only first section open by default (less scroll)
+  // On desktop: all sections open (380px panel has scrolling room)
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set(['background', 'header', 'cards']))
   const [miniPreviewVisible, setMiniPreviewVisible] = useState(true)
   const [miniPreviewPosition, setMiniPreviewPosition] = useState({ x: 16, y: typeof window !== 'undefined' ? window.innerHeight - 170 : 400 })
   const [isDragging, setIsDragging] = useState(false)
+  const [isLongPressing, setIsLongPressing] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingDragRef = useRef<{ clientX: number; clientY: number } | null>(null)
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const miniPreviewRef = useRef<HTMLDivElement>(null)
 
@@ -50,6 +147,11 @@ export default function ProfileCustomization() {
 
   // Check if there are pending changes
   const hasChanges = JSON.stringify(settings) !== JSON.stringify(initialSettings)
+
+  // Report unsaved state to parent (for tab-switch warnings)
+  useEffect(() => {
+    onUnsavedChange?.(hasChanges)
+  }, [hasChanges, onUnsavedChange])
 
   // Handle cancel changes
   const handleCancel = () => {
@@ -390,15 +492,23 @@ export default function ProfileCustomization() {
   const displayName = profile?.display_name || 'Your Shop Name'
   const titleScale = calculateTitleScale(displayName.length)
 
-  // Drag handlers for mini preview
-  const handleDragStart = (e: React.TouchEvent | React.MouseEvent) => {
-    setIsDragging(true)
+  // Drag handlers for mini preview — requires 1.5s long-press to initiate
+  const handlePressStart = (e: React.TouchEvent | React.MouseEvent) => {
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
-    setDragOffset({
-      x: clientX - miniPreviewPosition.x,
-      y: clientY - miniPreviewPosition.y
-    })
+    pendingDragRef.current = { clientX, clientY }
+    setIsLongPressing(true)
+
+    longPressTimerRef.current = setTimeout(() => {
+      // Long press complete — activate drag
+      if (pendingDragRef.current) {
+        setIsDragging(true)
+        setDragOffset({
+          x: pendingDragRef.current.clientX - miniPreviewPosition.x,
+          y: pendingDragRef.current.clientY - miniPreviewPosition.y
+        })
+      }
+    }, 1500)
   }
 
   const handleDragMove = (e: React.TouchEvent | React.MouseEvent) => {
@@ -415,8 +525,108 @@ export default function ProfileCustomization() {
   }
 
   const handleDragEnd = () => {
+    // Clear long-press timer if drag ends early
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+    pendingDragRef.current = null
     setIsDragging(false)
+    setIsLongPressing(false)
   }
+
+  // Cleanup long-press timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) {
+        clearTimeout(longPressTimerRef.current)
+      }
+    }
+  }, [])
+
+  // Accordion toggle — on compact screens, only one section open at a time
+  const toggleSection = (id: string) => {
+    setOpenSections(prev => {
+      if (prev.has(id)) {
+        // Closing this section
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      }
+      if (isCompact) {
+        // Compact: opening this section closes others (single-section mode)
+        return new Set([id])
+      }
+      // Desktop: multiple sections can be open
+      const next = new Set(prev)
+      next.add(id)
+      return next
+    })
+  }
+
+  // Set sensible defaults when layout mode changes
+  useEffect(() => {
+    if (isCompact) {
+      // Compact: collapse to just the first section
+      setOpenSections(new Set(['background']))
+    } else {
+      // Desktop: expand all
+      setOpenSections(new Set(['background', 'header', 'cards']))
+    }
+  }, [isCompact])
+
+  // Summary badges for collapsed accordion headers
+  const getBackgroundSummary = () => {
+    if (settings.background_type === 'image') return 'Image'
+    if (settings.background_type === 'gradient') return 'Gradient'
+    return 'Solid'
+  }
+  const getHeaderSummary = () => settings.glass_mode === 'gloss' ? 'Crystal' : 'Frosted'
+  const getCardsSummary = () => {
+    if (settings.card_style === 'dark') return 'Dark'
+    if (settings.card_style === 'custom') return 'Custom'
+    return 'Light'
+  }
+
+  // Colors currently in use across all settings (for quick-reuse palette)
+  const colorsInUse = [...new Set([
+    settings.background_color, settings.primary_color, settings.display_name_color,
+    settings.card_color, settings.card_text_color, settings.glass_tint,
+  ].filter(c => c && c !== '#FFFFFF' && c !== '#000000'))]
+
+  // Reusable color swatch row component
+  const renderSwatches = (value: string, onChange: (color: string) => void) => (
+    <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+      {COLOR_SWATCHES.map(c => (
+        <button
+          key={c}
+          onClick={() => onChange(c)}
+          className={`w-5 h-5 rounded-full border-2 transition-all hover:scale-110 ${
+            value === c ? 'border-blue-400 ring-1 ring-blue-400/50' : 'border-slate-600'
+          }`}
+          style={{ backgroundColor: c }}
+          title={c}
+        />
+      ))}
+      {/* Colors in use separator + palette */}
+      {colorsInUse.length > 0 && (
+        <>
+          <div className="w-px h-4 bg-slate-600 mx-0.5" />
+          {colorsInUse.filter(c => !COLOR_SWATCHES.includes(c)).map(c => (
+            <button
+              key={`used-${c}`}
+              onClick={() => onChange(c)}
+              className={`w-5 h-5 rounded-full border-2 transition-all hover:scale-110 ${
+                value === c ? 'border-blue-400 ring-1 ring-blue-400/50' : 'border-dashed border-slate-500'
+              }`}
+              style={{ backgroundColor: c }}
+              title={`In use: ${c}`}
+            />
+          ))}
+        </>
+      )}
+    </div>
+  )
 
   // Render the iPhone mockup preview (reusable for both desktop and modal)
   const renderPreviewMockup = () => (
@@ -583,7 +793,7 @@ export default function ProfileCustomization() {
   )
 
   return (
-    <div className="min-h-[calc(100vh-200px)]">
+    <div className="lg:h-[calc(100vh-160px)] lg:min-h-[400px] flex flex-col">
       {/* Mobile Preview Modal (Full Screen) */}
       {mobilePreviewOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
@@ -642,7 +852,7 @@ export default function ProfileCustomization() {
       {miniPreviewVisible && !mobilePreviewOpen && (
         <div
           ref={miniPreviewRef}
-          className="fixed z-40 lg:hidden touch-none"
+          className="fixed z-40 lg:hidden touch-none select-none"
           style={{
             left: `${miniPreviewPosition.x}px`,
             top: `${miniPreviewPosition.y}px`,
@@ -650,26 +860,29 @@ export default function ProfileCustomization() {
             height: '151px',
             cursor: isDragging ? 'grabbing' : 'grab'
           }}
+          onMouseDown={handlePressStart}
           onMouseMove={handleDragMove}
           onMouseUp={handleDragEnd}
           onMouseLeave={handleDragEnd}
+          onTouchStart={handlePressStart}
           onTouchMove={handleDragMove}
           onTouchEnd={handleDragEnd}
         >
-          {/* Drag Handle - positioned above the phone */}
-          <div
-            className="absolute -top-6 left-0 right-0 h-6 flex items-center justify-center cursor-grab active:cursor-grabbing z-10"
-            onMouseDown={handleDragStart}
-            onTouchStart={handleDragStart}
-          >
-            <div className="bg-black/60 rounded-full px-2 py-1">
-              <GripVertical className="w-4 h-4 text-white/80" />
+          {/* 6-dot grip overlay (2 cols × 3 rows) */}
+          <div className={`absolute inset-0 z-10 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${isDragging ? 'opacity-90' : isLongPressing ? 'opacity-60' : 'opacity-30'}`}>
+            <div className="grid grid-cols-2 gap-x-2.5 gap-y-2">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_3px_rgba(0,0,0,0.5)]" />
+              ))}
             </div>
           </div>
 
+          {/* Subtle border glow when long-pressing / dragging */}
+          <div className={`absolute inset-0 rounded-xl border-2 transition-all duration-300 pointer-events-none ${isDragging ? 'border-white/50 shadow-lg shadow-white/20' : isLongPressing ? 'border-white/25' : 'border-transparent'}`} />
+
           {/* Mini iPhone Frame - scaled down version */}
           <div
-            className="relative w-full h-full overflow-hidden pointer-events-none"
+            className="relative w-full h-full overflow-hidden rounded-xl pointer-events-none"
             style={{
               transform: 'scale(0.25)',
               transformOrigin: 'top left',
@@ -683,17 +896,20 @@ export default function ProfileCustomization() {
       )}
 
       {/* Main Side-by-Side Layout Container */}
-      <div className="flex flex-col lg:flex-row h-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="flex flex-col lg:flex-row flex-1 min-h-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-2xl overflow-hidden shadow-2xl">
 
         {/* ===== PREVIEW AREA (Left Side) - Hidden on Mobile ===== */}
         <div
           ref={previewContainerRef}
-          className="hidden lg:flex flex-1 justify-center items-center p-8 relative"
+          className="hidden lg:flex flex-1 min-h-0 justify-center items-center p-4 relative overflow-hidden"
           style={{
             background: 'radial-gradient(circle at 15% 50%, rgba(76, 29, 149, 0.6), transparent 50%), radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.5), transparent 50%), radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.6), transparent 50%)'
           }}
         >
-          {renderPreviewMockup()}
+          {/* Scale mockup to fit available height */}
+          <div className="max-h-full" style={{ transform: 'scale(0.85)', transformOrigin: 'center center' }}>
+            {renderPreviewMockup()}
+          </div>
           {/* View Live Profile Link */}
           <a
             href={`/u/${profile?.username}`}
@@ -706,14 +922,15 @@ export default function ProfileCustomization() {
           </a>
         </div>
 
-        {/* ===== CONTROLS AREA (Right Side) ===== */}
-        <div className="w-full lg:w-[380px] bg-slate-800 border-t lg:border-t-0 lg:border-l border-white/10 p-6 lg:overflow-y-auto lg:max-h-none">
+        {/* ===== CONTROLS AREA (Right Side / Full on Mobile) ===== */}
+        <div className="w-full lg:w-[340px] lg:min-w-[300px] bg-slate-800 border-t lg:border-t-0 lg:border-l border-white/10 overflow-y-auto">
+          <div className="max-w-[400px] mx-auto lg:max-w-none p-3 lg:p-4">
 
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-white flex items-center">
-              <Store className="w-5 h-5 mr-2 text-blue-400" />
-              Shop Customization
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-white flex items-center">
+              <Store className="w-4 h-4 mr-1.5 text-blue-400" />
+              Storefront Editor
             </h3>
             {hasChanges && (
               <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded-full">
@@ -733,568 +950,671 @@ export default function ProfileCustomization() {
             </div>
           )}
 
-          {/* Section Tabs */}
-          <div className="flex space-x-1 mb-6 bg-slate-700/50 rounded-lg p-1">
-            <button
-              onClick={() => setActiveSection('material')}
-              className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-all ${
-                activeSection === 'material'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-600/50'
-              }`}
-            >
-              <Layers className="w-3 h-3 inline mr-1" />
-              Material
-            </button>
-            <button
-              onClick={() => setActiveSection('title')}
-              className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-all ${
-                activeSection === 'title'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-600/50'
-              }`}
-            >
-              <Type className="w-3 h-3 inline mr-1" />
-              Title
-            </button>
-            <button
-              onClick={() => setActiveSection('background')}
-              className={`flex-1 py-2 px-3 rounded-md text-xs font-medium transition-all ${
-                activeSection === 'background'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-600/50'
-              }`}
-            >
-              <Image className="w-3 h-3 inline mr-1" />
-              Background
-            </button>
+          {/* ===== THEME PRESETS ===== */}
+          <div className="mb-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Wand2 className="w-3.5 h-3.5 text-purple-400" />
+              <span className="text-xs text-slate-400">Quick Themes</span>
+            </div>
+            <div className="grid grid-cols-6 gap-1.5">
+              {THEME_PRESETS.map(preset => (
+                <button
+                  key={preset.name}
+                  onClick={() => setSettings({ ...settings, ...preset.settings })}
+                  className="group/preset flex flex-col items-center gap-1 p-1.5 rounded-lg border border-slate-600/50 hover:border-blue-500/50 hover:bg-slate-700/50 transition-all"
+                  title={preset.name}
+                >
+                  {/* Mini preview: 3 color bars */}
+                  <div className="w-full h-8 rounded overflow-hidden flex flex-col">
+                    <div className="flex-1" style={{ backgroundColor: preset.preview.bg }} />
+                    <div className="h-2" style={{ backgroundColor: preset.preview.card }} />
+                    <div className="h-1.5" style={{ backgroundColor: preset.preview.accent }} />
+                  </div>
+                  <span
+                    className="text-[10px] leading-none font-medium"
+                    style={{ color: preset.preview.labelColor || '#CBD5E1' }}
+                  >{preset.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* ===== MATERIAL SECTION ===== */}
-          {activeSection === 'material' && (
-            <div className="space-y-6">
-              {/* Glass Mode Toggle */}
-              <div>
-                <h4 className="text-xs uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-white/10">
-                  Glass Material
-                </h4>
-                <div
-                  className="relative bg-slate-700 rounded-lg p-1 cursor-pointer"
-                  onClick={() => setSettings({
-                    ...settings,
-                    glass_mode: settings.glass_mode === 'matte' ? 'gloss' : 'matte'
-                  })}
-                >
-                  <div
-                    className="absolute top-1 h-[calc(100%-8px)] w-[calc(50%-4px)] bg-blue-600 rounded-md transition-transform duration-300 ease-out"
-                    style={{
-                      transform: settings.glass_mode === 'gloss' ? 'translateX(100%)' : 'translateX(0)'
-                    }}
-                  />
-                  <div className="relative flex">
-                    <div className={`flex-1 text-center py-2 text-sm z-10 transition-colors ${
-                      settings.glass_mode === 'matte' ? 'text-white' : 'text-slate-400'
-                    }`}>
-                      Frosted (Matte)
-                    </div>
-                    <div className={`flex-1 text-center py-2 text-sm z-10 transition-colors ${
-                      settings.glass_mode === 'gloss' ? 'text-white' : 'text-slate-400'
-                    }`}>
-                      Crystal (Gloss)
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {/* ===== ACCORDION SECTIONS ===== */}
+          <div className="space-y-2">
 
-              {/* Glass Tint */}
-              <div>
-                <label className="text-xs text-slate-300 mb-2 block">Glass Tint</label>
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="color"
-                    value={settings.glass_tint}
-                    onChange={(e) => setSettings({ ...settings, glass_tint: e.target.value })}
-                    className="w-10 h-10 rounded-full border-2 border-slate-600 cursor-pointer bg-transparent"
-                  />
-                  <input
-                    type="text"
-                    value={settings.glass_tint}
-                    onChange={(e) => setSettings({ ...settings, glass_tint: e.target.value })}
-                    className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              {/* Button Color */}
-              <div>
-                <h4 className="text-xs uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-white/10">
-                  Button Color
-                </h4>
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="color"
-                    value={settings.primary_color}
-                    onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
-                    className="w-12 h-12 rounded-lg border-2 border-slate-600 cursor-pointer bg-transparent"
-                  />
-                  <input
-                    type="text"
-                    value={settings.primary_color}
-                    onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
-                  />
-                </div>
-                {/* Button Preview */}
-                <div className="mt-3 p-3 bg-slate-700/50 rounded-lg">
-                  <button
-                    className="w-full py-2 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
-                    style={{ backgroundColor: settings.primary_color }}
-                  >
-                    Sample Button
-                  </button>
-                </div>
-              </div>
-
-              {/* Card Style Section */}
-              <div>
-                <h4 className="text-xs uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-white/10">
-                  Card Style
-                </h4>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => setSettings({
-                      ...settings,
-                      card_style: 'light',
-                      card_color: '#FFFFFF',
-                      card_text_color: '#000000'
-                    })}
-                    className={`p-2 rounded-lg border transition-all text-center ${
-                      settings.card_style === 'light'
-                        ? 'border-blue-500 bg-blue-500/20'
-                        : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
-                    }`}
-                  >
-                    <div className="w-full h-5 bg-white rounded mb-1.5"></div>
-                    <span className="text-xs text-slate-300">Light</span>
-                  </button>
-                  <button
-                    onClick={() => setSettings({
-                      ...settings,
-                      card_style: 'dark',
-                      card_color: '#000000',
-                      card_text_color: '#f2f2f2'
-                    })}
-                    className={`p-2 rounded-lg border transition-all text-center ${
-                      settings.card_style === 'dark'
-                        ? 'border-blue-500 bg-blue-500/20'
-                        : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
-                    }`}
-                  >
-                    <div className="w-full h-5 bg-black rounded mb-1.5"></div>
-                    <span className="text-xs text-slate-300">Dark</span>
-                  </button>
-                  <button
-                    onClick={() => setSettings({ ...settings, card_style: 'custom' })}
-                    className={`p-2 rounded-lg border transition-all text-center ${
-                      settings.card_style === 'custom'
-                        ? 'border-blue-500 bg-blue-500/20'
-                        : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
-                    }`}
-                  >
-                    <div className="w-full h-5 rounded mb-1.5" style={{ backgroundColor: settings.card_color }}></div>
-                    <span className="text-xs text-slate-300">Custom</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Custom Card Colors */}
-              {settings.card_style === 'custom' && (
-                <div className="space-y-3 p-3 bg-slate-700/30 rounded-lg">
-                  <div>
-                    <label className="text-xs text-slate-300 mb-2 block">Card Background</label>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="color"
-                        value={settings.card_color}
-                        onChange={(e) => setSettings({ ...settings, card_color: e.target.value })}
-                        className="w-8 h-8 rounded-lg border border-slate-600 cursor-pointer bg-transparent"
-                      />
-                      <input
-                        type="text"
-                        value={settings.card_color}
-                        onChange={(e) => setSettings({ ...settings, card_color: e.target.value })}
-                        className="flex-1 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-xs text-slate-300 mb-2 block">Card Text</label>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="color"
-                        value={settings.card_text_color}
-                        onChange={(e) => setSettings({ ...settings, card_text_color: e.target.value })}
-                        className="w-8 h-8 rounded-lg border border-slate-600 cursor-pointer bg-transparent"
-                      />
-                      <input
-                        type="text"
-                        value={settings.card_text_color}
-                        onChange={(e) => setSettings({ ...settings, card_text_color: e.target.value })}
-                        className="flex-1 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ===== TITLE SECTION ===== */}
-          {activeSection === 'title' && (
-            <div className="space-y-6">
-              {/* Font Selection */}
-              <div>
-                <h4 className="text-xs uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-white/10">
-                  Title Font
-                </h4>
-                <div className="relative">
-                  <button
-                    onClick={() => setFontDropdownOpen(!fontDropdownOpen)}
-                    className="w-full px-3 py-3 bg-slate-700 border border-slate-600 rounded-lg text-left flex items-center justify-between hover:bg-slate-600/50 transition-colors"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span
-                        className="text-white font-medium"
-                        style={{ fontFamily: selectedFont?.family }}
-                      >
-                        {selectedFont?.name}
-                      </span>
-                      <span className="text-xs text-slate-400 bg-slate-600 px-1.5 py-0.5 rounded">
-                        {selectedFont?.category}
-                      </span>
-                    </div>
-                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${fontDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {fontDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-slate-700 rounded-lg shadow-xl border border-slate-600 z-50 max-h-64 overflow-y-auto">
-                      {fontCategories.map(category => (
-                        <div key={category} className="p-1">
-                          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-2 py-1.5">
-                            {category}
-                          </div>
-                          {fontOptions.filter(f => f.category === category).map((font) => (
-                            <button
-                              key={font.id}
-                              onClick={() => {
-                                setSettings({ ...settings, display_name_font: font.id as any })
-                                setFontDropdownOpen(false)
-                              }}
-                              className={`w-full px-2 py-2 text-left hover:bg-slate-600 rounded transition-colors flex items-center justify-between ${
-                                settings.display_name_font === font.id ? 'bg-blue-600/30 border-l-2 border-blue-500' : ''
-                              }`}
-                            >
-                              <span
-                                className="text-white text-sm"
-                                style={{ fontFamily: font.family }}
-                              >
-                                {font.name}
-                              </span>
-                              {settings.display_name_font === font.id && (
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Title Color */}
-              <div>
-                <h4 className="text-xs uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-white/10">
-                  Title Color
-                </h4>
-                <div className="flex items-center space-x-3">
-                  <input
-                    type="color"
-                    value={settings.display_name_color}
-                    onChange={(e) => setSettings({ ...settings, display_name_color: e.target.value })}
-                    className="w-10 h-10 rounded-full border-2 border-slate-600 cursor-pointer bg-transparent"
-                  />
-                  <input
-                    type="text"
-                    value={settings.display_name_color}
-                    onChange={(e) => setSettings({ ...settings, display_name_color: e.target.value })}
-                    className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-
-              {/* Title Preview */}
-              <div
-                className="p-4 rounded-lg transition-all duration-300"
-                style={{
-                  backgroundColor: getLuminance(settings.display_name_color) > 128 ? '#1e293b' : '#f1f5f9'
-                }}
+            {/* ───── 1. PAGE BACKGROUND ───── */}
+            <div className="bg-slate-700/30 rounded-xl overflow-hidden">
+              <button
+                onClick={() => toggleSection('background')}
+                className="w-full flex items-center justify-between p-2.5 hover:bg-slate-700/50 transition-colors"
               >
-                <h3
-                  className="text-xl font-bold text-center transition-all duration-300"
-                  style={getDisplayNameStyle()}
-                >
-                  {displayName}
-                </h3>
+                <div className="flex items-center gap-2.5">
+                  <Image className="w-4 h-4 text-blue-400" />
+                  <span className="text-sm font-medium text-white">Page Background</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-slate-400 bg-slate-600/60 px-2 py-0.5 rounded-full">{getBackgroundSummary()}</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${openSections.has('background') ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
+
+              <div
+                className="grid transition-all duration-300 ease-in-out"
+                style={{ gridTemplateRows: openSections.has('background') ? '1fr' : '0fr' }}
+              >
+                <div className="overflow-hidden">
+                <div className="px-3 pb-3 space-y-3 border-t border-white/5 pt-3">
+                  {/* Background Type */}
+                  <div>
+                    <label className="text-xs text-white mb-2 block">Type</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => setSettings({ ...settings, background_type: 'image' })}
+                        className={`p-2 rounded-lg border transition-all text-center ${
+                          settings.background_type === 'image'
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
+                        }`}
+                      >
+                        <Image className="w-3.5 h-3.5 mx-auto mb-0.5 text-slate-300" />
+                        <span className="text-[11px] text-white">Image</span>
+                      </button>
+                      <button
+                        onClick={() => setSettings({ ...settings, background_type: 'gradient' })}
+                        className={`p-2 rounded-lg border transition-all text-center ${
+                          settings.background_type === 'gradient'
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
+                        }`}
+                      >
+                        <Layers className="w-3.5 h-3.5 mx-auto mb-0.5 text-slate-300" />
+                        <span className="text-[11px] text-white">Gradient</span>
+                      </button>
+                      <button
+                        onClick={() => setSettings({ ...settings, background_type: 'solid' })}
+                        className={`p-2 rounded-lg border transition-all text-center ${
+                          settings.background_type === 'solid'
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
+                        }`}
+                      >
+                        <Palette className="w-3.5 h-3.5 mx-auto mb-0.5 text-slate-300" />
+                        <span className="text-[11px] text-white">Solid</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Background Image Upload */}
+                  {settings.background_type === 'image' && (
+                    <div>
+                      <div className="border-2 border-dashed border-slate-600 rounded-xl p-4 text-center hover:border-blue-500 hover:bg-blue-500/10 transition-all duration-200">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) handleBackgroundImageUpload(file)
+                          }}
+                          className="hidden"
+                          id="background-upload"
+                          disabled={uploading}
+                        />
+                        <label
+                          htmlFor="background-upload"
+                          className="cursor-pointer flex flex-col items-center space-y-2"
+                        >
+                          {uploading ? (
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                          ) : (
+                            <Upload className="w-8 h-8 text-slate-400" />
+                          )}
+                          <span className="text-sm text-white">
+                            {uploading ? 'Uploading...' : 'Upload Background'}
+                          </span>
+                          <span className="text-xs text-slate-500">PNG, JPG up to 10MB</span>
+                        </label>
+                      </div>
+
+                      {uploadError && (
+                        <div className="mt-2 p-2 bg-red-500/20 border border-red-500/30 rounded-lg">
+                          <p className="text-xs text-red-400">{uploadError}</p>
+                        </div>
+                      )}
+
+                      {settings.background_image && (
+                        <div className="mt-2 p-2 bg-green-500/20 border border-green-500/30 rounded-lg">
+                          <p className="text-xs text-green-400 flex items-center">
+                            <Sparkles className="w-3 h-3 mr-1" />
+                            Background uploaded
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Gradient Options */}
+                  {settings.background_type === 'gradient' && (
+                    <div className="space-y-4">
+                      {/* Gradient Shape */}
+                      <div>
+                        <label className="text-xs text-white mb-2 block">Shape</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => setSettings({ ...settings, background_gradient_type: 'linear' })}
+                            className={`p-2 rounded-lg border transition-all ${
+                              settings.background_gradient_type === 'linear'
+                                ? 'border-blue-500 bg-blue-500/20'
+                                : 'border-slate-600 hover:border-slate-500'
+                            }`}
+                          >
+                            <div className="w-full h-4 rounded mb-0.5" style={{
+                              background: `linear-gradient(to right, ${settings.background_color}, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'})`
+                            }}></div>
+                            <span className="text-[10px] text-white leading-none">Linear</span>
+                          </button>
+                          <button
+                            onClick={() => setSettings({ ...settings, background_gradient_type: 'radial' })}
+                            className={`p-2 rounded-lg border transition-all ${
+                              settings.background_gradient_type === 'radial'
+                                ? 'border-blue-500 bg-blue-500/20'
+                                : 'border-slate-600 hover:border-slate-500'
+                            }`}
+                          >
+                            <div className="w-full h-4 rounded mb-0.5" style={{
+                              background: `radial-gradient(circle at center, ${settings.background_color} 0%, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 100%)`
+                            }}></div>
+                            <span className="text-[10px] text-white leading-none">Radial</span>
+                          </button>
+                          <button
+                            onClick={() => setSettings({ ...settings, background_gradient_type: 'diamond' })}
+                            className={`p-2 rounded-lg border transition-all ${
+                              settings.background_gradient_type === 'diamond'
+                                ? 'border-blue-500 bg-blue-500/20'
+                                : 'border-slate-600 hover:border-slate-500'
+                            }`}
+                          >
+                            <div className="w-full h-4 rounded mb-0.5" style={{
+                              background: `conic-gradient(from 45deg at 50% 50%, ${settings.background_color} 0deg, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 90deg, ${settings.background_color} 180deg, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 270deg, ${settings.background_color} 360deg)`
+                            }}></div>
+                            <span className="text-[10px] text-white leading-none">Diamond</span>
+                          </button>
+                          <button
+                            onClick={() => setSettings({ ...settings, background_gradient_type: 'vignette' })}
+                            className={`p-2 rounded-lg border transition-all ${
+                              settings.background_gradient_type === 'vignette'
+                                ? 'border-blue-500 bg-blue-500/20'
+                                : 'border-slate-600 hover:border-slate-500'
+                            }`}
+                          >
+                            <div className="w-full h-4 rounded mb-0.5" style={{
+                              background: `radial-gradient(ellipse at center, ${settings.background_color} 0%, ${settings.background_color} 40%, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 100%)`
+                            }}></div>
+                            <span className="text-[10px] text-white leading-none">Vignette</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Color */}
+                      <div>
+                        <label className="text-xs text-white mb-2 block">Color</label>
+                        <div className="flex items-center space-x-3">
+                          <input
+                            type="color"
+                            value={settings.background_color}
+                            onChange={(e) => setSettings({ ...settings, background_color: e.target.value })}
+                            className="w-8 h-8 rounded-lg border-2 border-slate-600 cursor-pointer bg-transparent"
+                          />
+                          <input
+                            type="text"
+                            value={settings.background_color}
+                            onChange={(e) => setSettings({ ...settings, background_color: e.target.value })}
+                            className="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-2.5 py-1.5 text-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="#3B82F6"
+                          />
+                        </div>
+                        {renderSwatches(settings.background_color, (c) => setSettings({ ...settings, background_color: c }))}
+                      </div>
+
+                      {/* Fade Direction */}
+                      <div>
+                        <label className="text-xs text-white mb-2 block">Fade to</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            onClick={() => setSettings({ ...settings, background_gradient_direction: 'white' })}
+                            className={`p-2 rounded-lg border transition-all ${
+                              settings.background_gradient_direction === 'white'
+                                ? 'border-blue-500 bg-blue-500/20'
+                                : 'border-slate-600 hover:border-slate-500'
+                            }`}
+                          >
+                            <div className="w-full h-4 rounded mb-0.5 flex items-center justify-center bg-white">
+                              <span className="text-[10px] text-slate-800 font-medium leading-none">White</span>
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSettings({ ...settings, background_gradient_direction: 'black' })}
+                            className={`p-2 rounded-lg border transition-all ${
+                              settings.background_gradient_direction === 'black'
+                                ? 'border-blue-500 bg-blue-500/20'
+                                : 'border-slate-600 hover:border-slate-500'
+                            }`}
+                          >
+                            <div className="w-full h-4 rounded mb-0.5 flex items-center justify-center bg-black border border-slate-600">
+                              <span className="text-[10px] text-white font-medium leading-none">Black</span>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Solid Color */}
+                  {settings.background_type === 'solid' && (
+                    <div>
+                      <label className="text-xs text-white mb-2 block">Color</label>
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="color"
+                          value={settings.background_color}
+                          onChange={(e) => setSettings({ ...settings, background_color: e.target.value })}
+                          className="w-8 h-8 rounded-lg border-2 border-slate-600 cursor-pointer bg-transparent"
+                        />
+                        <input
+                          type="text"
+                          value={settings.background_color}
+                          onChange={(e) => setSettings({ ...settings, background_color: e.target.value })}
+                          className="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-2.5 py-1.5 text-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="#3B82F6"
+                        />
+                      </div>
+                      {renderSwatches(settings.background_color, (c) => setSettings({ ...settings, background_color: c }))}
+                      <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: settings.background_color }}>
+                        <p className="text-xs text-center" style={{ color: getLuminance(settings.background_color) < 128 ? '#FFFFFF' : '#000000' }}>
+                          Background Preview
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                </div>
               </div>
             </div>
-          )}
 
-          {/* ===== BACKGROUND SECTION ===== */}
-          {activeSection === 'background' && (
-            <div className="space-y-6">
-              {/* Background Type */}
-              <div>
-                <h4 className="text-xs uppercase tracking-wider text-slate-400 mb-3 pb-2 border-b border-white/10">
-                  Background Type
-                </h4>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => setSettings({ ...settings, background_type: 'image' })}
-                    className={`p-3 rounded-lg border transition-all text-center ${
-                      settings.background_type === 'image'
-                        ? 'border-blue-500 bg-blue-500/20'
-                        : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
-                    }`}
-                  >
-                    <Image className="w-5 h-5 mx-auto mb-1 text-slate-300" />
-                    <span className="text-xs text-slate-300">Image</span>
-                  </button>
-                  <button
-                    onClick={() => setSettings({ ...settings, background_type: 'gradient' })}
-                    className={`p-3 rounded-lg border transition-all text-center ${
-                      settings.background_type === 'gradient'
-                        ? 'border-blue-500 bg-blue-500/20'
-                        : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
-                    }`}
-                  >
-                    <Layers className="w-5 h-5 mx-auto mb-1 text-slate-300" />
-                    <span className="text-xs text-slate-300">Gradient</span>
-                  </button>
-                  <button
-                    onClick={() => setSettings({ ...settings, background_type: 'solid' })}
-                    className={`p-3 rounded-lg border transition-all text-center ${
-                      settings.background_type === 'solid'
-                        ? 'border-blue-500 bg-blue-500/20'
-                        : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
-                    }`}
-                  >
-                    <Palette className="w-5 h-5 mx-auto mb-1 text-slate-300" />
-                    <span className="text-xs text-slate-300">Solid</span>
-                  </button>
+            {/* ───── 2. HEADER CARD ───── */}
+            <div className="bg-slate-700/30 rounded-xl overflow-hidden">
+              <button
+                onClick={() => toggleSection('header')}
+                className="w-full flex items-center justify-between p-2.5 hover:bg-slate-700/50 transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Layers className="w-4 h-4 text-purple-400" />
+                  <span className="text-sm font-medium text-white">Header Card</span>
                 </div>
-              </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-slate-400 bg-slate-600/60 px-2 py-0.5 rounded-full">{getHeaderSummary()}</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${openSections.has('header') ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
 
-              {/* Background Image Upload */}
-              {settings.background_type === 'image' && (
-                <div>
-                  <div className="border-2 border-dashed border-slate-600 rounded-xl p-4 text-center hover:border-blue-500 hover:bg-blue-500/10 transition-all duration-200">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) handleBackgroundImageUpload(file)
-                      }}
-                      className="hidden"
-                      id="background-upload"
-                      disabled={uploading}
-                    />
-                    <label
-                      htmlFor="background-upload"
-                      className="cursor-pointer flex flex-col items-center space-y-2"
+              <div
+                className="grid transition-all duration-300 ease-in-out"
+                style={{ gridTemplateRows: openSections.has('header') ? '1fr' : '0fr' }}
+              >
+                <div className="overflow-hidden">
+                <div className="px-3 pb-3 space-y-3 border-t border-white/5 pt-3">
+                  {/* Glass Mode Toggle */}
+                  <div>
+                    <label className="text-xs text-white mb-2 block">Glass</label>
+                    <div
+                      className="relative bg-slate-700 rounded-lg p-1 cursor-pointer"
+                      onClick={() => setSettings({
+                        ...settings,
+                        glass_mode: settings.glass_mode === 'matte' ? 'gloss' : 'matte'
+                      })}
                     >
-                      {uploading ? (
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                      ) : (
-                        <Upload className="w-8 h-8 text-slate-400" />
-                      )}
-                      <span className="text-sm text-slate-300">
-                        {uploading ? 'Uploading...' : 'Upload Background'}
-                      </span>
-                      <span className="text-xs text-slate-500">PNG, JPG up to 10MB</span>
-                    </label>
-                  </div>
-
-                  {uploadError && (
-                    <div className="mt-2 p-2 bg-red-500/20 border border-red-500/30 rounded-lg">
-                      <p className="text-xs text-red-400">{uploadError}</p>
-                    </div>
-                  )}
-
-                  {settings.background_image && (
-                    <div className="mt-2 p-2 bg-green-500/20 border border-green-500/30 rounded-lg">
-                      <p className="text-xs text-green-400 flex items-center">
-                        <Sparkles className="w-3 h-3 mr-1" />
-                        Background uploaded
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Gradient Options */}
-              {settings.background_type === 'gradient' && (
-                <div className="space-y-4">
-                  {/* Gradient Type */}
-                  <div>
-                    <label className="text-xs text-slate-300 mb-2 block">Gradient Type</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => setSettings({ ...settings, background_gradient_type: 'linear' })}
-                        className={`p-2 rounded-lg border transition-all ${
-                          settings.background_gradient_type === 'linear'
-                            ? 'border-blue-500 bg-blue-500/20'
-                            : 'border-slate-600 hover:border-slate-500'
-                        }`}
-                      >
-                        <div className="w-full h-5 rounded mb-1" style={{
-                          background: `linear-gradient(to right, ${settings.background_color}, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'})`
-                        }}></div>
-                        <span className="text-[10px] text-slate-300">Linear</span>
-                      </button>
-                      <button
-                        onClick={() => setSettings({ ...settings, background_gradient_type: 'radial' })}
-                        className={`p-2 rounded-lg border transition-all ${
-                          settings.background_gradient_type === 'radial'
-                            ? 'border-blue-500 bg-blue-500/20'
-                            : 'border-slate-600 hover:border-slate-500'
-                        }`}
-                      >
-                        <div className="w-full h-5 rounded mb-1" style={{
-                          background: `radial-gradient(circle at center, ${settings.background_color} 0%, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 100%)`
-                        }}></div>
-                        <span className="text-[10px] text-slate-300">Radial</span>
-                      </button>
-                      <button
-                        onClick={() => setSettings({ ...settings, background_gradient_type: 'diamond' })}
-                        className={`p-2 rounded-lg border transition-all ${
-                          settings.background_gradient_type === 'diamond'
-                            ? 'border-blue-500 bg-blue-500/20'
-                            : 'border-slate-600 hover:border-slate-500'
-                        }`}
-                      >
-                        <div className="w-full h-5 rounded mb-1" style={{
-                          background: `conic-gradient(from 45deg at 50% 50%, ${settings.background_color} 0deg, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 90deg, ${settings.background_color} 180deg, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 270deg, ${settings.background_color} 360deg)`
-                        }}></div>
-                        <span className="text-[10px] text-slate-300">Diamond</span>
-                      </button>
-                      <button
-                        onClick={() => setSettings({ ...settings, background_gradient_type: 'vignette' })}
-                        className={`p-2 rounded-lg border transition-all ${
-                          settings.background_gradient_type === 'vignette'
-                            ? 'border-blue-500 bg-blue-500/20'
-                            : 'border-slate-600 hover:border-slate-500'
-                        }`}
-                      >
-                        <div className="w-full h-5 rounded mb-1" style={{
-                          background: `radial-gradient(ellipse at center, ${settings.background_color} 0%, ${settings.background_color} 40%, ${settings.background_gradient_direction === 'white' ? '#FFFFFF' : '#000000'} 100%)`
-                        }}></div>
-                        <span className="text-[10px] text-slate-300">Vignette</span>
-                      </button>
+                      <div
+                        className="absolute top-1 h-[calc(100%-8px)] w-[calc(50%-4px)] bg-blue-600 rounded-md transition-transform duration-300 ease-out"
+                        style={{
+                          transform: settings.glass_mode === 'gloss' ? 'translateX(100%)' : 'translateX(0)'
+                        }}
+                      />
+                      <div className="relative flex">
+                        <div className={`flex-1 text-center py-1.5 text-xs z-10 transition-colors ${
+                          settings.glass_mode === 'matte' ? 'text-white' : 'text-slate-400'
+                        }`}>
+                          Frosted
+                        </div>
+                        <div className={`flex-1 text-center py-1.5 text-xs z-10 transition-colors ${
+                          settings.glass_mode === 'gloss' ? 'text-white' : 'text-slate-400'
+                        }`}>
+                          Crystal
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Background Color Picker */}
+                  {/* Glass Tint */}
                   <div>
-                    <label className="text-xs text-slate-300 mb-2 block">Background Color</label>
+                    <label className="text-xs text-white mb-2 block">Tint</label>
                     <div className="flex items-center space-x-3">
                       <input
                         type="color"
-                        value={settings.background_color}
-                        onChange={(e) => setSettings({ ...settings, background_color: e.target.value })}
-                        className="w-12 h-12 rounded-lg border-2 border-slate-600 cursor-pointer bg-transparent"
+                        value={settings.glass_tint}
+                        onChange={(e) => setSettings({ ...settings, glass_tint: e.target.value })}
+                        className="w-8 h-8 rounded-full border-2 border-slate-600 cursor-pointer bg-transparent"
                       />
                       <input
                         type="text"
-                        value={settings.background_color}
-                        onChange={(e) => setSettings({ ...settings, background_color: e.target.value })}
-                        className="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm"
-                        placeholder="#3B82F6"
+                        value={settings.glass_tint}
+                        onChange={(e) => setSettings({ ...settings, glass_tint: e.target.value })}
+                        className="flex-1 px-2.5 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
+                    {renderSwatches(settings.glass_tint, (c) => setSettings({ ...settings, glass_tint: c }))}
                   </div>
 
-                  {/* Gradient Direction */}
+                  {/* ── Title divider ── */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <div className="flex-1 h-px bg-white/10"></div>
+                    <span className="text-[10px] uppercase tracking-widest text-slate-500">Title</span>
+                    <div className="flex-1 h-px bg-white/10"></div>
+                  </div>
+
+                  {/* Font Selection */}
                   <div>
-                    <label className="text-xs text-slate-300 mb-2 block">Fade Direction</label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <label className="text-xs text-white mb-2 block">Font</label>
+                    <div className="relative">
                       <button
-                        onClick={() => setSettings({ ...settings, background_gradient_direction: 'white' })}
-                        className={`p-2 rounded-lg border transition-all ${
-                          settings.background_gradient_direction === 'white'
-                            ? 'border-blue-500 bg-blue-500/20'
-                            : 'border-slate-600 hover:border-slate-500'
-                        }`}
+                        onClick={() => setFontDropdownOpen(!fontDropdownOpen)}
+                        className="w-full px-2.5 py-2 bg-slate-700 border border-slate-600 rounded-lg text-left flex items-center justify-between hover:bg-slate-600/50 transition-colors"
                       >
-                        <div className="w-full h-5 rounded mb-1 flex items-center justify-center bg-white">
-                          <span className="text-[10px] text-slate-800 font-medium">White</span>
+                        <div className="flex items-center space-x-2">
+                          <span
+                            className="text-white font-medium"
+                            style={{ fontFamily: selectedFont?.family }}
+                          >
+                            {selectedFont?.name}
+                          </span>
+                          <span className="text-xs text-slate-400 bg-slate-600 px-1.5 py-0.5 rounded">
+                            {selectedFont?.category}
+                          </span>
                         </div>
-                        <span className="text-[10px] text-slate-300">To White</span>
+                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${fontDropdownOpen ? 'rotate-180' : ''}`} />
                       </button>
-                      <button
-                        onClick={() => setSettings({ ...settings, background_gradient_direction: 'black' })}
-                        className={`p-2 rounded-lg border transition-all ${
-                          settings.background_gradient_direction === 'black'
-                            ? 'border-blue-500 bg-blue-500/20'
-                            : 'border-slate-600 hover:border-slate-500'
-                        }`}
-                      >
-                        <div className="w-full h-5 rounded mb-1 flex items-center justify-center bg-black border border-slate-600">
-                          <span className="text-[10px] text-white font-medium">Black</span>
+
+                      {fontDropdownOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-slate-700 rounded-lg shadow-xl border border-slate-600 z-50 max-h-72 overflow-hidden flex flex-col">
+                          {/* Font Search */}
+                          <div className="p-2 border-b border-slate-600 flex-shrink-0">
+                            <div className="relative">
+                              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                              <input
+                                type="text"
+                                value={fontSearch}
+                                onChange={(e) => setFontSearch(e.target.value)}
+                                placeholder="Search fonts..."
+                                className="w-full pl-7 pr-2 py-1.5 bg-slate-600 border border-slate-500 rounded text-white text-xs placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                autoFocus
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </div>
+                          </div>
+                          <div className="overflow-y-auto flex-1">
+                          {fontCategories.map(category => {
+                            const filtered = fontOptions.filter(f =>
+                              f.category === category &&
+                              (fontSearch === '' || f.name.toLowerCase().includes(fontSearch.toLowerCase()))
+                            )
+                            if (filtered.length === 0) return null
+                            return (
+                              <div key={category} className="p-1">
+                                <div className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-2 py-1.5 sticky top-0 bg-slate-700/95 backdrop-blur-sm">
+                                  {category}
+                                </div>
+                                {filtered.map((font) => (
+                                  <button
+                                    key={font.id}
+                                    onClick={() => {
+                                      setSettings({ ...settings, display_name_font: font.id as any })
+                                      setFontDropdownOpen(false)
+                                      setFontSearch('')
+                                    }}
+                                    className={`w-full px-2 py-2 text-left hover:bg-slate-600 rounded transition-colors flex items-center justify-between ${
+                                      settings.display_name_font === font.id ? 'bg-blue-600/30 border-l-2 border-blue-500' : ''
+                                    }`}
+                                  >
+                                    <span
+                                      className="text-white text-sm"
+                                      style={{ fontFamily: font.family }}
+                                    >
+                                      {font.name}
+                                    </span>
+                                    {settings.display_name_font === font.id && (
+                                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            )
+                          })}
+                          {fontOptions.filter(f => fontSearch === '' || f.name.toLowerCase().includes(fontSearch.toLowerCase())).length === 0 && (
+                            <div className="p-4 text-center text-xs text-slate-400">No fonts match "{fontSearch}"</div>
+                          )}
+                          </div>
                         </div>
-                        <span className="text-[10px] text-slate-300">To Black</span>
-                      </button>
+                      )}
                     </div>
                   </div>
-                </div>
-              )}
 
-              {/* Solid Background Color Picker */}
-              {settings.background_type === 'solid' && (
-                <div>
-                  <label className="text-xs text-slate-300 mb-2 block">Background Color</label>
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="color"
-                      value={settings.background_color}
-                      onChange={(e) => setSettings({ ...settings, background_color: e.target.value })}
-                      className="w-12 h-12 rounded-lg border-2 border-slate-600 cursor-pointer bg-transparent"
-                    />
-                    <input
-                      type="text"
-                      value={settings.background_color}
-                      onChange={(e) => setSettings({ ...settings, background_color: e.target.value })}
-                      className="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm"
-                      placeholder="#3B82F6"
-                    />
+                  {/* Title Color */}
+                  <div>
+                    <label className="text-xs text-white mb-2 block">Color</label>
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="color"
+                        value={settings.display_name_color}
+                        onChange={(e) => setSettings({ ...settings, display_name_color: e.target.value })}
+                        className="w-8 h-8 rounded-full border-2 border-slate-600 cursor-pointer bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={settings.display_name_color}
+                        onChange={(e) => setSettings({ ...settings, display_name_color: e.target.value })}
+                        className="flex-1 px-2.5 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    {renderSwatches(settings.display_name_color, (c) => setSettings({ ...settings, display_name_color: c }))}
                   </div>
-                  {/* Preview */}
-                  <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: settings.background_color }}>
-                    <p className="text-xs text-center" style={{ color: getLuminance(settings.background_color) < 128 ? '#FFFFFF' : '#000000' }}>
-                      Background Preview
+
+                  {/* Title Preview on Glass */}
+                  <div
+                    className="p-3 rounded-lg transition-all duration-300"
+                    style={{
+                      ...getGlassCardStyle(),
+                      borderRadius: '12px'
+                    }}
+                  >
+                    <h3
+                      className="text-sm font-bold text-center transition-all duration-300"
+                      style={getDisplayNameStyle()}
+                    >
+                      {displayName}
+                    </h3>
+                    <p className="text-[11px] text-center mt-1 opacity-60" style={{ color: getBioTextColor() }}>
+                      Preview on glass
                     </p>
                   </div>
                 </div>
-              )}
+                </div>
+              </div>
             </div>
-          )}
 
-          {/* Save Button */}
-          <div className="mt-8 pt-4 border-t border-white/10">
+            {/* ───── 3. PRODUCT CARDS ───── */}
+            <div className="bg-slate-700/30 rounded-xl overflow-hidden">
+              <button
+                onClick={() => toggleSection('cards')}
+                className="w-full flex items-center justify-between p-2.5 hover:bg-slate-700/50 transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Package className="w-4 h-4 text-green-400" />
+                  <span className="text-sm font-medium text-white">Product Cards</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-slate-400 bg-slate-600/60 px-2 py-0.5 rounded-full">{getCardsSummary()}</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${openSections.has('cards') ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
+
+              <div
+                className="grid transition-all duration-300 ease-in-out"
+                style={{ gridTemplateRows: openSections.has('cards') ? '1fr' : '0fr' }}
+              >
+                <div className="overflow-hidden">
+                <div className="px-3 pb-3 space-y-3 border-t border-white/5 pt-3">
+                  {/* Card Theme Presets */}
+                  <div>
+                    <label className="text-xs text-white mb-2 block">Theme</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => setSettings({
+                          ...settings,
+                          card_style: 'light',
+                          card_color: '#FFFFFF',
+                          card_text_color: '#000000'
+                        })}
+                        className={`p-2 rounded-lg border transition-all text-center ${
+                          settings.card_style === 'light'
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
+                        }`}
+                      >
+                        <div className="w-full h-4 bg-white rounded mb-1"></div>
+                        <span className="text-xs text-white">Light</span>
+                      </button>
+                      <button
+                        onClick={() => setSettings({
+                          ...settings,
+                          card_style: 'dark',
+                          card_color: '#000000',
+                          card_text_color: '#f2f2f2'
+                        })}
+                        className={`p-2 rounded-lg border transition-all text-center ${
+                          settings.card_style === 'dark'
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
+                        }`}
+                      >
+                        <div className="w-full h-4 bg-black rounded mb-1"></div>
+                        <span className="text-xs text-white">Dark</span>
+                      </button>
+                      <button
+                        onClick={() => setSettings({ ...settings, card_style: 'custom' })}
+                        className={`p-2 rounded-lg border transition-all text-center ${
+                          settings.card_style === 'custom'
+                            ? 'border-blue-500 bg-blue-500/20'
+                            : 'border-slate-600 hover:border-slate-500 bg-slate-700/50'
+                        }`}
+                      >
+                        <div className="w-full h-4 rounded mb-1" style={{ backgroundColor: settings.card_color }}></div>
+                        <span className="text-xs text-white">Custom</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Custom Card Background (only for custom preset) */}
+                  {settings.card_style === 'custom' && (
+                    <div className="p-3 bg-slate-700/30 rounded-lg">
+                      <label className="text-xs text-white mb-2 block">Card Background</label>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="color"
+                          value={settings.card_color}
+                          onChange={(e) => setSettings({ ...settings, card_color: e.target.value })}
+                          className="w-8 h-8 rounded-lg border border-slate-600 cursor-pointer bg-transparent"
+                        />
+                        <input
+                          type="text"
+                          value={settings.card_color}
+                          onChange={(e) => setSettings({ ...settings, card_color: e.target.value })}
+                          className="flex-1 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        />
+                      </div>
+                      {renderSwatches(settings.card_color, (c) => setSettings({ ...settings, card_color: c }))}
+                    </div>
+                  )}
+
+                  {/* Text Color — available for all presets (light, dark, custom) */}
+                  <div>
+                    <label className="text-xs text-white mb-2 block">Text Color</label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="color"
+                        value={settings.card_text_color}
+                        onChange={(e) => setSettings({ ...settings, card_text_color: e.target.value })}
+                        className="w-8 h-8 rounded-lg border border-slate-600 cursor-pointer bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={settings.card_text_color}
+                        onChange={(e) => setSettings({ ...settings, card_text_color: e.target.value })}
+                        className="flex-1 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-xs font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                    {renderSwatches(settings.card_text_color, (c) => setSettings({ ...settings, card_text_color: c }))}
+                    <p className="text-[10px] text-slate-500 mt-1.5 flex items-center gap-1">
+                      <Info className="w-3 h-3" />
+                      Also sets bio caption color
+                    </p>
+                  </div>
+
+                  {/* ── Button divider ── */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <div className="flex-1 h-px bg-white/10"></div>
+                    <span className="text-[10px] uppercase tracking-widest text-slate-500">Button</span>
+                    <div className="flex-1 h-px bg-white/10"></div>
+                  </div>
+
+                  {/* Button Color */}
+                  <div>
+                    <label className="text-xs text-white mb-2 block">Color</label>
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="color"
+                        value={settings.primary_color}
+                        onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
+                        className="w-8 h-8 rounded-lg border-2 border-slate-600 cursor-pointer bg-transparent"
+                      />
+                      <input
+                        type="text"
+                        value={settings.primary_color}
+                        onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
+                        className="flex-1 px-2.5 py-1.5 bg-slate-700 border border-slate-600 rounded-lg text-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    {renderSwatches(settings.primary_color, (c) => setSettings({ ...settings, primary_color: c }))}
+                    {/* Button Preview */}
+                    <div className="mt-3 p-3 bg-slate-700/50 rounded-lg">
+                      <button
+                        className="w-full py-2 rounded-lg text-white text-sm font-medium transition-all hover:opacity-90"
+                        style={{ backgroundColor: settings.primary_color }}
+                      >
+                        Open Product
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Save Button — extra bottom padding on mobile for floating bar clearance */}
+          <div className="mt-4 lg:mt-6 pt-3 pb-16 lg:pb-0 border-t border-white/10">
             <button
               onClick={handleSave}
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2.5 rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-200"
             >
               {loading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -1304,6 +1624,7 @@ export default function ProfileCustomization() {
               <span>{loading ? 'Saving...' : 'Save Customization'}</span>
             </button>
           </div>
+          </div>{/* close max-w wrapper */}
         </div>
       </div>
 

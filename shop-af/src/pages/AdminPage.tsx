@@ -191,15 +191,15 @@ export default function AdminPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+        <div className="mb-4">
+          <h1 className="text-fluid-xl font-bold text-gray-900 mb-1">Admin Dashboard</h1>
           <p className="text-gray-600">Manage users and whitelist settings</p>
         </div>
 
         {/* Search */}
-        <div className="mb-6">
+        <div className="mb-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
@@ -213,8 +213,8 @@ export default function AdminPage() {
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-8">
+        <div className="border-b border-gray-200 mb-3">
+          <nav className="-mb-px flex space-x-6">
             {tabs.map((tab) => {
               const Icon = tab.icon
               return (
@@ -239,7 +239,7 @@ export default function AdminPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-12">
+          <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading...</p>
           </div>
@@ -249,26 +249,26 @@ export default function AdminPage() {
             {activeTab === 'users' && (
               <div>
                 <div className="bg-white rounded-lg shadow overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900">All Users</h3>
+                  <div className="px-4 py-3 border-b border-gray-200">
+                    <h3 className="text-fluid-base font-medium text-gray-900">All Users</h3>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             User
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Plan
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Products
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Joined
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
                           </th>
                         </tr>
@@ -276,7 +276,7 @@ export default function AdminPage() {
                       <tbody className="bg-white divide-y divide-gray-200">
                         {filteredUsers.map((user) => (
                           <tr key={user.user_id}>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center">
                                 <div className="flex-shrink-0 h-10 w-10">
                                   <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
@@ -294,7 +294,7 @@ export default function AdminPage() {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-4 py-3 whitespace-nowrap">
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                 user.plan_type === 'pro' || user.plan_type === 'unlimited'
                                   ? 'bg-green-100 text-green-800'
@@ -304,13 +304,13 @@ export default function AdminPage() {
                                  user.plan_type === 'pro' ? 'Pro' : 'Free'}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                               {user.product_count}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                               {new Date(user.created_at).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium space-x-2">
                               <button
                                 onClick={() => toggleUserAdmin(user.user_id, user.is_admin)}
                                 className={`inline-flex items-center px-2 py-1 rounded text-xs ${
@@ -345,9 +345,9 @@ export default function AdminPage() {
             {activeTab === 'whitelist' && (
               <div>
                 {/* Add to Whitelist */}
-                <div className="bg-white rounded-lg shadow p-6 mb-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Add Email to Whitelist</h3>
-                  <div className="flex space-x-4">
+                <div className="bg-white rounded-lg shadow p-4 mb-4">
+                  <h3 className="text-fluid-base font-medium text-gray-900 mb-3">Add Email to Whitelist</h3>
+                  <div className="flex space-x-3">
                     <div className="flex-1">
                       <input
                         type="email"
@@ -374,26 +374,26 @@ export default function AdminPage() {
 
                 {/* Whitelist Table */}
                 <div className="bg-white rounded-lg shadow overflow-hidden">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900">Whitelisted Emails</h3>
+                  <div className="px-4 py-3 border-b border-gray-200">
+                    <h3 className="text-fluid-base font-medium text-gray-900">Whitelisted Emails</h3>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Email
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Granted By
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Status
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Added
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Actions
                           </th>
                         </tr>
@@ -401,16 +401,16 @@ export default function AdminPage() {
                       <tbody className="bg-white divide-y divide-gray-200">
                         {filteredWhitelist.map((entry) => (
                           <tr key={entry.id}>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center">
                                 <Mail className="w-4 h-4 text-gray-400 mr-2" />
                                 <span className="text-sm font-medium text-gray-900">{entry.email}</span>
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                               {entry.granted_by_admin || 'Unknown'}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td className="px-4 py-3 whitespace-nowrap">
                               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                 entry.is_active
                                   ? 'bg-green-100 text-green-800'
@@ -429,10 +429,10 @@ export default function AdminPage() {
                                 )}
                               </span>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                               {new Date(entry.created_at).toLocaleDateString()}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
                               <button
                                 onClick={() => removeFromWhitelist(entry.id)}
                                 className="inline-flex items-center px-2 py-1 rounded text-xs bg-red-100 text-red-700 hover:bg-red-200"
@@ -446,9 +446,9 @@ export default function AdminPage() {
                       </tbody>
                     </table>
                     {filteredWhitelist.length === 0 && (
-                      <div className="text-center py-12">
+                      <div className="text-center py-8">
                         <UserPlus className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No whitelisted emails</h3>
+                        <h3 className="text-fluid-base font-medium text-gray-900 mb-2">No whitelisted emails</h3>
                         <p className="text-gray-600">Add emails to the whitelist to grant automatic Pro access.</p>
                       </div>
                     )}

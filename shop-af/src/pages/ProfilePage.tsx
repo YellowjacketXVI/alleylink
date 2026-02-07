@@ -267,7 +267,7 @@ const fetchProfile = async () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <div className="flex items-center justify-center py-20">
+        <div className="flex items-center justify-center py-10">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading profile...</p>
@@ -281,10 +281,10 @@ const fetchProfile = async () => {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="text-center">
-            <div className="text-red-600 text-6xl mb-4">⚠️</div>
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Profile Not Found</h1>
+            <div className="text-red-600 text-3xl mb-4">⚠️</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Profile Not Found</h1>
             <p className="text-gray-600 mb-4">
               {error === 'Profile not found'
                 ? `The profile "${username}" doesn't exist. Please check the URL and try again.`
@@ -492,14 +492,14 @@ const fetchProfile = async () => {
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
           border: 1px solid ${hexToRgba(cardColor, 0.3)};
-          box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+          box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.25);
         }
 
         /* Glass Title Card - Matte Mode (Default) */
         .glass-title-card {
           position: relative;
-          border-radius: 24px;
-          padding: 60px 40px;
+          border-radius: 8px;
+          padding: 16px 12px;
           display: flex;
           flex-direction: column;
           justify-content: center;
@@ -510,7 +510,7 @@ const fetchProfile = async () => {
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
           border: 1px solid rgba(${glassColorRgb}, 0.3);
-          box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+          box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.15);
         }
 
         /* Glass Title Card - Gloss Mode */
@@ -534,7 +534,7 @@ const fetchProfile = async () => {
           content: '';
           position: absolute;
           top: 0; left: 0; right: 0; bottom: 0;
-          border-radius: 24px;
+          border-radius: 8px;
           background: linear-gradient(
             125deg,
             rgba(255,255,255,0.4) 0%,
@@ -552,9 +552,9 @@ const fetchProfile = async () => {
         }
 
         .glass-title-card .card-title {
-          font-size: calc(6rem * ${titleScale});
+          font-size: calc(3rem * ${titleScale});
           line-height: 1;
-          margin-bottom: 16px;
+          margin-bottom: 10px;
           transition: font-size 0.3s ease;
           text-shadow: 0 2px 10px rgba(0,0,0,0.1);
           word-wrap: break-word;
@@ -562,7 +562,7 @@ const fetchProfile = async () => {
 
         .glass-title-card .card-caption {
           font-family: ${getCaptionFontFamily()};
-          font-size: calc(1.2rem * ${captionScale});
+          font-size: calc(1rem * ${captionScale});
           color: ${captionColor};
           opacity: 0.8;
           letter-spacing: 0.02em;
@@ -574,11 +574,11 @@ const fetchProfile = async () => {
 
         @media (max-width: 768px) {
           .glass-title-card {
-            padding: 40px 24px;
-            border-radius: 16px;
+            padding: 12px 10px;
+            border-radius: 8px;
           }
           .glass-title-card .card-title {
-            font-size: calc(3.5rem * ${titleScale});
+            font-size: calc(2.2rem * ${titleScale});
           }
           .glass-title-card .card-caption {
             font-size: calc(1rem * ${captionScale});
@@ -625,8 +625,8 @@ const fetchProfile = async () => {
           <Navbar transparent />
 
           {/* Glass Title Card Header */}
-          <header className="p-4 md:p-8 text-white text-center">
-            <div className={`max-w-4xl mx-auto glass-title-card ${glassMode === 'gloss' ? 'gloss-mode' : ''}`}>
+          <header className="p-2 md:p-4 text-white text-center">
+            <div className={`max-w-xl mx-auto glass-title-card ${glassMode === 'gloss' ? 'gloss-mode' : ''}`}>
               <div className="card-content">
                 <h1
                   className="card-title font-bold"
@@ -643,15 +643,15 @@ const fetchProfile = async () => {
             </div>
           </header>
 
-          <main className="max-w-6xl mx-auto px-4 py-6 sm:px-6">
+          <main className="max-w-screen-xl mx-auto px-3 py-3 sm:px-4">
             {products.length === 0 ? (
-              <div className="text-center py-20">
-                <div className="glass-panel rounded-2xl p-12">
-                  <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-white/20 flex items-center justify-center">
-                    <Tag className="w-12 h-12 product-text" />
+              <div className="text-center py-4">
+                <div className="glass-panel rounded-lg p-4">
+                  <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-white/20 flex items-center justify-center">
+                    <Tag className="w-5 h-5 product-text" />
                   </div>
-                  <h3 className="text-2xl font-bold product-text mb-4">No Products Yet</h3>
-                  <p className="product-text opacity-80 text-lg max-w-md mx-auto">
+                  <h3 className="text-base font-bold product-text mb-2">No Products Yet</h3>
+                  <p className="product-text opacity-80 text-xs max-w-sm mx-auto">
                     {profile.display_name} hasn't added any products to their storefront yet.
                   </p>
                 </div>
@@ -660,7 +660,7 @@ const fetchProfile = async () => {
               <>
                 {/* Category Dropdown */}
                 {products.length > 0 && (
-                  <div className="mb-8">
+                  <div className="mb-4">
                     <div className="relative" ref={dropdownRef}>
                       {/* Dropdown Button */}
                       <button
@@ -670,15 +670,15 @@ const fetchProfile = async () => {
                             setIsDropdownOpen(false)
                           }
                         }}
-                        className="w-full p-4 rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer flex items-center justify-between hover:shadow-xl transition-all border"
+                        className="w-full p-2.5 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer flex items-center justify-between hover:shadow-md transition-all border text-sm"
                         style={{
                           backgroundColor: cardColor,
                           color: cardTextColor,
                           borderColor: cardColor === '#FFFFFF' ? '#E5E7EB' : cardColor
                         }}
                       >
-                        <div className="flex items-center space-x-3">
-                          <currentFilter.icon className="w-5 h-5" style={{ color: cardTextColor }} />
+                        <div className="flex items-center space-x-2">
+                          <currentFilter.icon className="w-4 h-4" style={{ color: cardTextColor }} />
                           <span className="font-medium">{currentFilter.label}</span>
                           <span className="text-sm opacity-70">({currentFilter.count})</span>
                         </div>
@@ -689,8 +689,8 @@ const fetchProfile = async () => {
 
                       {/* Dropdown Menu */}
                       {isDropdownOpen && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-80 overflow-y-auto animate-in slide-in-from-top-2 duration-200">
-                          <div className="p-4">
+                        <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-lg shadow-md border border-gray-200 z-50 max-h-64 overflow-y-auto animate-in slide-in-from-top-2 duration-200">
+                          <div className="p-2.5">
                             {/* 3-column grid layout */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                               {filterOptions.map((option) => {
@@ -727,19 +727,19 @@ const fetchProfile = async () => {
 
                 {/* Product Grid */}
                 {filteredProducts.length === 0 ? (
-                  <div className="text-center py-16">
-                    <div className="glass-panel rounded-2xl p-12">
-                      <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-white/20 flex items-center justify-center">
-                        <Tag className="w-12 h-12 product-text" />
+                  <div className="text-center py-4">
+                    <div className="glass-panel rounded-lg p-4">
+                      <div className="w-14 h-14 mx-auto mb-3 rounded-full bg-white/20 flex items-center justify-center">
+                        <Tag className="w-7 h-7 product-text" />
                       </div>
-                      <h3 className="text-2xl font-bold product-text mb-4">No Products Found</h3>
-                      <p className="product-text opacity-80 text-lg max-w-md mx-auto">
+                      <h3 className="text-base font-bold product-text mb-2">No Products Found</h3>
+                      <p className="product-text opacity-80 text-sm max-w-sm mx-auto">
                         No products match the selected filter. Try selecting a different category.
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                  <div className="grid grid-auto-fill gap-fluid">
                     {filteredProducts.map((product, index) => (
                     <div
                       key={product.id}
@@ -749,7 +749,7 @@ const fetchProfile = async () => {
                       }}
                     >
                       <div
-                        className="relative w-full aspect-square overflow-hidden"
+                        className="relative w-full aspect-[4/3] overflow-hidden"
                         style={{ backgroundColor: product.bg_color || (product.image_url ? '#f3f4f6' : undefined) }}
                       >
                         {product.image_url ? (
@@ -760,22 +760,22 @@ const fetchProfile = async () => {
                           />
                         ) : (
                           <div className="w-full h-full bg-white/20 flex items-center justify-center">
-                            <Tag className="w-12 h-12 product-text" />
+                            <Tag className="w-8 h-8 product-text" />
                           </div>
                         )}
                       </div>
-                      <div className="p-3 sm:p-4">
-                        <h3 className="product-text font-semibold text-sm sm:text-lg mb-1">
+                      <div className="p-2 sm:p-2.5">
+                        <h3 className="product-text font-semibold text-xs sm:text-sm mb-0.5 line-clamp-1">
                           {product.title}
                         </h3>
                         {product.description && (
-                          <p className="product-text opacity-80 text-sm mb-2 line-clamp-2">
+                          <p className="product-text opacity-80 text-[11px] mb-1.5 line-clamp-2">
                             {product.description}
                           </p>
                         )}
 
                         <button
-                          className="w-full py-2 rounded-lg font-medium transition-all duration-200 hover:opacity-90"
+                          className="w-full py-1.5 rounded-md text-xs font-medium transition-all duration-200 hover:opacity-90"
                           style={{ backgroundColor: primaryColor, color: 'white' }}
                           onClick={(e) => {
                             e.stopPropagation()

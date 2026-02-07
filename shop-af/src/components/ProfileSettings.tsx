@@ -191,21 +191,21 @@ export default function ProfileSettings() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="bg-white rounded-2xl shadow-lg p-8">
+      <div className="bg-white rounded-lg shadow p-4">
         {/* Avatar Section */}
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Profile Picture</h3>
+        <div className="mb-4">
+          <h3 className="text-fluid-lg font-semibold text-gray-900 mb-3">Profile Picture</h3>
 
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-3">
             <div className="relative">
               {profile.avatar_url ? (
                 <img
                   src={profile.avatar_url}
                   alt="Profile"
-                  className="w-20 h-20 rounded-full object-cover border-4 border-gray-200"
+                  className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
                 />
               ) : (
-                <div className="w-20 h-20 rounded-full bg-gray-200 border-4 border-gray-300 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-gray-200 border-2 border-gray-300 flex items-center justify-center">
                   <User className="w-8 h-8 text-gray-400" />
                 </div>
               )}
@@ -260,7 +260,7 @@ export default function ProfileSettings() {
         </div>
 
         {/* Profile Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Display Name */}
           <div>
             <label htmlFor="display_name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -271,7 +271,7 @@ export default function ProfileSettings() {
               type="text"
               value={formData.display_name}
               onChange={(e) => setFormData(prev => ({ ...prev, display_name: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               placeholder="Your display name"
               required
             />
@@ -284,7 +284,7 @@ export default function ProfileSettings() {
             </label>
             {!editingUsername ? (
               <div className="flex items-center space-x-2">
-                <div className="flex-1 px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-gray-600">
+                <div className="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-600">
                   @{profile.username}
                 </div>
                 <button
@@ -303,7 +303,7 @@ export default function ProfileSettings() {
                     type="text"
                     value={formData.username}
                     onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value.toLowerCase() }))}
-                    className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:border-transparent transition-all pr-20 ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent transition-all pr-20 ${
                       usernameStatus === 'available' ? 'border-green-300 focus:ring-green-500' :
                       usernameStatus === 'taken' || usernameStatus === 'invalid' ? 'border-red-300 focus:ring-red-500' :
                       'border-gray-300 focus:ring-blue-500'
@@ -369,7 +369,7 @@ export default function ProfileSettings() {
               id="bio"
               value={formData.bio}
               onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
               placeholder="Tell people about yourself and what you recommend..."
               rows={3}
               maxLength={500}
@@ -383,13 +383,13 @@ export default function ProfileSettings() {
 
           {/* Messages */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
 
           {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-sm">
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
               {success}
             </div>
           )}
@@ -398,7 +398,7 @@ export default function ProfileSettings() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg font-semibold hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Saving...' : 'Save Changes'}
           </button>

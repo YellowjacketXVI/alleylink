@@ -25,13 +25,13 @@ export default function SubscriptionManager() {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-          <Crown className="w-5 h-5 mr-2 text-blue-600" />
+    <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-fluid-lg font-semibold text-gray-900 flex items-center">
+          <Crown className="w-4 h-4 mr-1.5 text-blue-600" />
           Subscription
         </h3>
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor()}`}>
+        <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor()}`}>
           {getStatusText()}
         </span>
       </div>
@@ -43,68 +43,68 @@ export default function SubscriptionManager() {
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-2.5">
         {/* Current Plan Info */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="font-medium text-gray-900">Current Plan</h4>
-            <span className="text-2xl font-bold text-gray-900">
+        <div className="border border-gray-200 rounded-lg p-2.5">
+          <div className="flex items-center justify-between mb-1.5">
+            <h4 className="text-sm font-medium text-gray-900">Current Plan</h4>
+            <span className="text-base font-bold text-gray-900">
               {isPro ? '$4.99' : isBasic ? '$2.99' : 'Free'}
-              {(isPro || isBasic) && <span className="text-sm font-normal text-gray-600">/month</span>}
+              {(isPro || isBasic) && <span className="text-xs font-normal text-gray-600">/month</span>}
             </span>
           </div>
 
-          <div className="space-y-2 text-sm text-gray-600">
+          <div className="space-y-1 text-xs text-gray-600">
             {isPro ? (
               <>
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>
                   Unlimited products
                 </div>
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>
                   Advanced analytics & insights
                 </div>
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>
                   Custom branding & colors
                 </div>
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>
                   Priority support
                 </div>
               </>
             ) : isBasic ? (
               <>
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1.5"></span>
                   Up to 100 products
                 </div>
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1.5"></span>
                   Custom branding & colors
                 </div>
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                  <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1.5"></span>
                   Email support
                 </div>
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1.5"></span>
                   No advanced analytics
                 </div>
               </>
             ) : (
               <>
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1.5"></span>
                   Up to 3 products
                 </div>
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1.5"></span>
                   Basic customization
                 </div>
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full mr-1.5"></span>
                   Community support
                 </div>
               </>
@@ -113,33 +113,33 @@ export default function SubscriptionManager() {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-1.5">
           {isPro && isSubscribed && !profile.is_admin && (
             <button
               onClick={() => openCustomerPortal()}
               disabled={loading}
-              className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <CreditCard className="w-4 h-4 mr-2" />
+              <CreditCard className="w-3.5 h-3.5 mr-1.5" />
               {loading ? 'Loading...' : 'Manage Subscription'}
-              <ExternalLink className="w-4 h-4 ml-2" />
+              <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
             </button>
           )}
 
           {!isPro && (
             <a
               href="/pricing"
-              className="flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors"
+              className="flex items-center justify-center px-3 py-1.5 text-sm bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-colors"
             >
-              <Crown className="w-4 h-4 mr-2" />
+              <Crown className="w-3.5 h-3.5 mr-1.5" />
               Upgrade to Pro
             </a>
           )}
 
           {profile.is_admin && (
-            <div className="flex items-center px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <Crown className="w-4 h-4 mr-2 text-yellow-600" />
-              <span className="text-yellow-800 text-sm font-medium">
+            <div className="flex items-center px-3 py-1.5 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <Crown className="w-3.5 h-3.5 mr-1.5 text-yellow-600" />
+              <span className="text-yellow-800 text-xs font-medium">
                 Admin account with full access
               </span>
             </div>

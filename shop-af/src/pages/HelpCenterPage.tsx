@@ -123,35 +123,35 @@ export default function HelpCenterPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Navbar />
 
-      <div className="py-12 px-4 sm:px-6 lg:px-8">
+      <div className="py-8 px-3 sm:px-4 lg:px-6">
         <div className="max-w-4xl mx-auto">
           {/* Back button */}
           <Link
             to="/"
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-8 transition-colors"
+            className="flex items-center text-gray-600 hover:text-gray-900 mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Link>
 
           {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Help Center</h1>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <div className="text-center mb-6">
+            <h1 className="text-fluid-2xl font-bold text-gray-900 mb-3">Help Center</h1>
+            <p className="text-base text-gray-600 max-w-2xl mx-auto">
               Got questions? We've got answers. Can't find what you need? Reach out to us directly.
             </p>
           </div>
 
           {/* Contact Card */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 mb-12 text-white text-center">
-            <Mail className="w-10 h-10 mx-auto mb-4 opacity-90" />
-            <h2 className="text-2xl font-bold mb-2">Need Help?</h2>
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 mb-6 text-white text-center">
+            <Mail className="w-8 h-8 mx-auto mb-3 opacity-90" />
+            <h2 className="text-fluid-lg font-bold mb-1">Need Help?</h2>
             <p className="text-blue-100 mb-4">
               Our support team is here for you. Send us an email and we'll get back to you as soon as possible.
             </p>
             <a
               href="mailto:support@alleylink.com"
-              className="inline-flex items-center space-x-2 bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-all transform hover:scale-105"
+              className="inline-flex items-center space-x-2 bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-all transform hover:scale-105"
             >
               <Mail className="w-5 h-5" />
               <span>support@alleylink.com</span>
@@ -159,8 +159,8 @@ export default function HelpCenterPage() {
           </div>
 
           {/* FAQ Section */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+          <div className="mb-6">
+            <h2 className="text-fluid-lg font-bold text-gray-900 mb-4 flex items-center">
               <HelpCircle className="w-6 h-6 mr-2 text-blue-600" />
               Frequently Asked Questions
             </h2>
@@ -168,11 +168,11 @@ export default function HelpCenterPage() {
               {faqs.map((faq, index) => (
                 <div
                   key={index}
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden transition-all hover:shadow-md"
+                  className="bg-white rounded-lg border border-gray-200 overflow-hidden transition-all hover:shadow-md"
                 >
                   <button
                     onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                    className="w-full flex items-center justify-between p-5 text-left"
+                    className="w-full flex items-center justify-between p-3 text-left"
                   >
                     <div className="flex items-center space-x-3">
                       <faq.icon className="w-5 h-5 text-blue-600 flex-shrink-0" />
@@ -185,7 +185,7 @@ export default function HelpCenterPage() {
                     )}
                   </button>
                   {openFaq === index && (
-                    <div className="px-5 pb-5 pt-0">
+                    <div className="px-3 pb-3 pt-0">
                       <p className="text-gray-600 leading-relaxed pl-8">{faq.answer}</p>
                     </div>
                   )}
@@ -195,23 +195,23 @@ export default function HelpCenterPage() {
           </div>
 
           {/* Feedback Section - Suggestion Box & Bug Report */}
-          <div className="mb-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+          <div className="mb-6">
+            <h2 className="text-fluid-lg font-bold text-gray-900 mb-4 flex items-center">
               <MessageSquare className="w-6 h-6 mr-2 text-blue-600" />
               Share Your Feedback
             </h2>
 
             {!feedbackType && !submitted ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-auto-fill-lg gap-fluid">
                 {/* Suggestion Box Card */}
                 <button
                   onClick={() => setFeedbackType('suggestion')}
-                  className="bg-white rounded-2xl border-2 border-gray-200 p-8 text-left hover:border-blue-500 hover:shadow-lg transition-all group"
+                  className="bg-white rounded-lg border-2 border-gray-200 p-6 text-left hover:border-blue-500 hover:shadow-lg transition-all group"
                 >
-                  <div className="w-14 h-14 bg-yellow-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <Lightbulb className="w-7 h-7 text-yellow-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Suggestion Box</h3>
+                  <h3 className="text-fluid-base font-bold text-gray-900 mb-1">Suggestion Box</h3>
                   <p className="text-gray-600">
                     Have an idea for a new feature or improvement? We'd love to hear it! Your feedback shapes the future of AlleyLink.
                   </p>
@@ -220,12 +220,12 @@ export default function HelpCenterPage() {
                 {/* Bug Report Card */}
                 <button
                   onClick={() => setFeedbackType('bug')}
-                  className="bg-white rounded-2xl border-2 border-gray-200 p-8 text-left hover:border-red-500 hover:shadow-lg transition-all group"
+                  className="bg-white rounded-lg border-2 border-gray-200 p-6 text-left hover:border-red-500 hover:shadow-lg transition-all group"
                 >
-                  <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <Bug className="w-7 h-7 text-red-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Report a Bug</h3>
+                  <h3 className="text-fluid-base font-bold text-gray-900 mb-1">Report a Bug</h3>
                   <p className="text-gray-600">
                     Found something that isn't working right? Let us know so we can fix it. Please include as much detail as possible.
                   </p>
@@ -233,9 +233,9 @@ export default function HelpCenterPage() {
               </div>
             ) : submitted ? (
               /* Success State */
-              <div className="bg-white rounded-2xl border-2 border-green-200 p-12 text-center">
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h3>
+              <div className="bg-white rounded-lg border-2 border-green-200 p-6 text-center">
+                <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                <h3 className="text-fluid-lg font-bold text-gray-900 mb-1">Thank You!</h3>
                 <p className="text-gray-600 mb-6">
                   Your {feedbackType === 'bug' ? 'bug report' : 'suggestion'} has been submitted. We appreciate your feedback!
                 </p>
@@ -248,7 +248,7 @@ export default function HelpCenterPage() {
               </div>
             ) : (
               /* Feedback Form */
-              <div className="bg-white rounded-2xl shadow-xl p-8">
+              <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-3">
                     {feedbackType === 'suggestion' ? (
@@ -256,7 +256,7 @@ export default function HelpCenterPage() {
                     ) : (
                       <Bug className="w-6 h-6 text-red-600" />
                     )}
-                    <h3 className="text-xl font-bold text-gray-900">
+                    <h3 className="text-fluid-lg font-bold text-gray-900">
                       {feedbackType === 'suggestion' ? 'Share a Suggestion' : 'Report a Bug'}
                     </h3>
                   </div>
@@ -268,7 +268,7 @@ export default function HelpCenterPage() {
                   </button>
                 </div>
 
-                <form onSubmit={handleFeedbackSubmit} className="space-y-5">
+                <form onSubmit={handleFeedbackSubmit} className="space-y-4">
                   {!user && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -278,7 +278,7 @@ export default function HelpCenterPage() {
                         type="email"
                         value={feedbackForm.email}
                         onChange={(e) => setFeedbackForm(prev => ({ ...prev, email: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                         placeholder="you@example.com"
                       />
                       <p className="text-xs text-gray-500 mt-1">So we can follow up if needed</p>
@@ -293,7 +293,7 @@ export default function HelpCenterPage() {
                       type="text"
                       value={feedbackForm.subject}
                       onChange={(e) => setFeedbackForm(prev => ({ ...prev, subject: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder={feedbackType === 'bug' ? 'Brief description of the bug' : 'What\'s your idea?'}
                       required
                     />
@@ -306,7 +306,7 @@ export default function HelpCenterPage() {
                     <textarea
                       value={feedbackForm.message}
                       onChange={(e) => setFeedbackForm(prev => ({ ...prev, message: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                       rows={5}
                       placeholder={
                         feedbackType === 'bug'
@@ -318,7 +318,7 @@ export default function HelpCenterPage() {
                   </div>
 
                   {submitError && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                       {submitError}
                     </div>
                   )}
@@ -326,7 +326,7 @@ export default function HelpCenterPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className={`w-full py-3 px-4 rounded-xl font-semibold transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 ${
+                    className={`w-full py-2 px-3 rounded-lg font-semibold transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 ${
                       feedbackType === 'bug'
                         ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white hover:from-red-600 hover:to-orange-600'
                         : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'

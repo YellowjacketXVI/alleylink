@@ -35,20 +35,20 @@ export default function Navbar({ transparent = false }: NavbarProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
+          <Link to="/" className="flex items-center space-x-2">
             {!imageError ? (
               <img
                 src="/sitetitle.png"
                 alt="AlleyLink"
-                className="h-8 w-auto"
+                className={`h-8 w-auto ${transparent ? 'brightness-0 invert' : ''}`}
                 onError={() => setImageError(true)}
               />
             ) : (
               <>
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg flex items-center justify-center">
                   <ShoppingBag className="w-5 h-5 text-white" />
                 </div>
-                <span className={`text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent`}>
+                <span className={`text-xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent`}>
                   AlleyLink
                 </span>
               </>
@@ -57,31 +57,37 @@ export default function Navbar({ transparent = false }: NavbarProps) {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <Link to="/pricing" className={`${isActive('/pricing') ? 'text-blue-600 font-semibold' : textClasses} hover:text-blue-600 transition-colors`}>
+            <Link to="/pricing" className={`${isActive('/pricing') ? 'text-purple-600 font-semibold' : textClasses} hover:text-purple-600 transition-colors`}>
               Pricing
             </Link>
 
             {user ? (
               <>
-                <Link to="/dashboard" className={`${isActive('/dashboard') ? 'text-blue-600 font-semibold' : textClasses} hover:text-blue-600 transition-colors`}>
+                <Link to="/dashboard" className={`${isActive('/dashboard') ? 'text-purple-600 font-semibold' : textClasses} hover:text-purple-600 transition-colors`}>
                   Dashboard
                 </Link>
                 {profile?.is_admin && (
-                  <Link to="/admin" className={`${isActive('/admin') ? 'text-blue-600 font-semibold' : textClasses} hover:text-blue-600 transition-colors`}>
+                  <Link to="/admin" className={`${isActive('/admin') ? 'text-purple-600 font-semibold' : textClasses} hover:text-purple-600 transition-colors`}>
                     Admin
                   </Link>
                 )}
                 <div className="relative group">
-                  <button className={`flex items-center space-x-2 ${textClasses} hover:text-blue-600 transition-colors`}>
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-                      {profile?.avatar_url ? (
-                        <img
-                          src={profile.avatar_url}
-                          alt={profile.display_name}
-                          className="w-8 h-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <User className="w-4 h-4 text-white" />
+                  <button className={`flex items-center space-x-2 ${textClasses} hover:text-purple-600 transition-colors`}>
+                    <div className="relative">
+                      <div className="w-8 h-8 bg-gradient-to-r from-purple-600 to-purple-800 rounded-full flex items-center justify-center">
+                        {profile?.avatar_url ? (
+                          <img
+                            src={profile.avatar_url}
+                            alt={profile.display_name}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-4 h-4 text-white" />
+                        )}
+                      </div>
+                      {/* Pro status indicator */}
+                      {profile?.plan_type && profile.plan_type !== 'free' && (
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                       )}
                     </div>
                     <span className="font-medium">{profile?.display_name || 'User'}</span>
@@ -121,13 +127,13 @@ export default function Navbar({ transparent = false }: NavbarProps) {
               <div className="flex items-center space-x-4">
                 <Link
                   to="/login"
-                  className={`${textClasses} hover:text-blue-600 transition-colors`}
+                  className={`${textClasses} hover:text-purple-600 transition-colors`}
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/signup"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
+                  className="bg-gradient-to-r from-purple-600 to-purple-800 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-purple-900 transition-all transform hover:scale-105"
                 >
                   Get Started
                 </Link>
@@ -151,7 +157,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
               <Link
                 to="/pricing"
                 onClick={() => setIsMenuOpen(false)}
-                className={`${isActive('/pricing') ? 'text-blue-600 font-semibold' : textClasses} hover:text-blue-600 transition-colors`}
+                className={`${isActive('/pricing') ? 'text-purple-600 font-semibold' : textClasses} hover:text-purple-600 transition-colors`}
               >
                 Pricing
               </Link>
@@ -161,7 +167,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                   <Link
                     to="/dashboard"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`${isActive('/dashboard') ? 'text-blue-600 font-semibold' : textClasses} hover:text-blue-600 transition-colors`}
+                    className={`${isActive('/dashboard') ? 'text-purple-600 font-semibold' : textClasses} hover:text-purple-600 transition-colors`}
                   >
                     Dashboard
                   </Link>
@@ -169,7 +175,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                     <Link
                       to={`/u/${profile.username}`}
                       onClick={() => setIsMenuOpen(false)}
-                      className={`${textClasses} hover:text-blue-600 transition-colors`}
+                      className={`${textClasses} hover:text-purple-600 transition-colors`}
                     >
                       View Profile
                     </Link>
@@ -178,7 +184,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                     <Link
                       to="/admin"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`${textClasses} hover:text-blue-600 transition-colors`}
+                      className={`${textClasses} hover:text-purple-600 transition-colors`}
                     >
                       Admin
                     </Link>
@@ -195,14 +201,14 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                   <Link
                     to="/login"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`${textClasses} hover:text-blue-600 transition-colors`}
+                    className={`${textClasses} hover:text-purple-600 transition-colors`}
                   >
                     Sign In
                   </Link>
                   <Link
                     to="/signup"
                     onClick={() => setIsMenuOpen(false)}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all text-center"
+                    className="bg-gradient-to-r from-purple-600 to-purple-800 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-purple-900 transition-all text-center"
                   >
                     Get Started
                   </Link>
